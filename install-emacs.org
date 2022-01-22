@@ -20,3 +20,11 @@ Should be already installed.
 #+begin_src bash
 sudo pacman -S fd
 #+end_src
+* Test go in org
+#+begin_src go :imports "fmt"
+fmt.Println("Hello World!")
+#+end_src
+
+#+RESULTS:
+: Hello World!
+
