@@ -28,3 +28,18 @@ fmt.Println("Hello World!")
 #+RESULTS:
 : Hello World!
 
+* Test sudo with bash
+#+begin_src bash :var pw=(read-passwd "Password: ")
+echo $pw | sudo -S echo "hello"
+#+end_src
+
+#+RESULTS:
+: hello
+
+* Test sudo with bash and tramp
+#+begin_src bash :dir /sudo::
+sudo echo "hello"
+#+end_src
+
+#+RESULTS:
+: hello
