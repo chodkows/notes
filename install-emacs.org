@@ -21,6 +21,8 @@ Should be already installed.
 sudo pacman -S fd
 #+end_src
 * Test go in org
+Need to install by: M-x -> package install -> ob-go
+And restart doom by: M-x -> doom/reload
 #+begin_src go :imports "fmt"
 fmt.Println("Hello World!")
 #+end_src
