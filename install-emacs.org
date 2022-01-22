@@ -1,0 +1,22 @@
+#+TITLE: :Install Doom Emacs
+#+AUTHOR: chodkows
+
+* Prerequesites
+**  Git 2.23+
+#+begin_src bash
+sudo pacman -S git
+#+end_src
+**  Emacs 27.1+ (27.2 is recommended, or native-comp).
+#+begin_src bash
+sudo pacman -S emacs
+#+end_src
+**  ripgrep 11.0+
+#+begin_src bash
+sudo pacman -S rg
+#+end_src
+**  GNU find
+Should be already installed.
+**  OPTIONAL: fd 7.3.0+ (improves file indexing performance for some commands)
+#+begin_src bash
+sudo pacman -S fd
+#+end_src
