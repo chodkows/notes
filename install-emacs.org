@@ -1,7 +1,8 @@
-#+TITLE: Install Doom Emacs
+#+TITLE: Notes
 #+AUTHOR: chodkows
+#+OPTIONS: toc:2
 
-* Prerequesites
+* Install Doom Emacs
 **  Git 2.23+
 #+begin_src bash
 sudo pacman -S git
@@ -20,7 +21,8 @@ Should be already installed.
 #+begin_src bash
 sudo pacman -S fd
 #+end_src
-* Test go in org
+
+* Test Go in org mode
 Need to install by: M-x -> package install -> ob-go
 And restart doom by: M-x -> doom/reload
 #+begin_src go :imports "fmt"
@@ -45,3 +47,86 @@ sudo echo "hello"
 
 #+RESULTS:
 : hello
+
+* How to prepare bootable pendrive on linux(Option 1)
+** Check pendrive is visible in system
+#+begin_src bash
+df -h
+#+end_src
+
+#+RESULTS:
+| Filesystem                | Size | Used | Avail | Use% | Mounted                   | on |
+| tmpfs                     | 763M | 2,0M | 761M  |   1% | /run                      |    |
+| /dev/mapper/vgubuntu-root | 467G | 149G | 294G  |  34% | /                         |    |
+| tmpfs                     | 3,8G | 0    | 3,8G  |   0% | /dev/shm                  |    |
+| tmpfs                     | 5,0M | 4,0K | 5,0M  |   1% | /run/lock                 |    |
+| /dev/nvme0n1p2            | 704M | 171M | 482M  |  27% | /boot                     |    |
+| /dev/nvme0n1p1            | 511M | 73M  | 439M  |  15% | /boot/efi                 |    |
+| tmpfs                     | 763M | 124K | 763M  |   1% | /run/user/1000            |    |
+| /dev/sda1                 | 760M | 760M | 0     | 100% | /media/wojtek/ARCH_202111 |    |
+
+** Unmount pendrive
+#+begin_src bash :dir /sudo::
+sudo umount /dev/sda1
+#+end_src
+
+** Write ISO to pendrive
+#+begin_src bash :dir /sudo::
+sudo dd bs=4M if=/home/wojtek/ISO/ of=/dev/sda status=progress oflag=sync
+#+end_src
+
+* How to prepare bootable pendrive on linux(Option 1)
+** Check block devices
+#+begin_src bash
+lsblk
+#+end_src
+
+#+RESULTS:
+| NAME              | MAJ:MIN | RM | SIZE   | RO | TYPE  | MOUNTPOINT                   |
+| loop0             |     7:0 |  0 | 99,3M  |  1 | loop  | /snap/core/11743             |
+| loop1             |     7:1 |  0 | 4K     |  1 | loop  | /snap/bare/5                 |
+| loop2             |     7:2 |  0 | 61,9M  |  1 | loop  | /snap/core20/1270            |
+| loop3             |     7:3 |  0 | 61,8M  |  1 | loop  | /snap/core20/1242            |
+| loop4             |     7:4 |  0 | 99,4M  |  1 | loop  | /snap/core/11993             |
+| loop5             |     7:5 |  0 | 168,6M |  1 | loop  | /snap/emacs/1300             |
+| loop6             |     7:6 |  0 | 55,5M  |  1 | loop  | /snap/core18/2253            |
+| loop7             |     7:7 |  0 | 242,3M |  1 | loop  | /snap/gnome-3-38-2004/76     |
+| loop8             |     7:8 |  0 | 168,6M |  1 | loop  | /snap/emacs/1343             |
+| loop9             |     7:9 |  0 | 247,9M |  1 | loop  | /snap/gnome-3-38-2004/87     |
+| loop10            |    7:10 |  0 | 65,2M  |  1 | loop  | /snap/gtk-common-themes/1519 |
+| loop11            |    7:11 |  0 | 54,2M  |  1 | loop  | /snap/snap-store/558         |
+| loop12            |    7:12 |  0 | 154,6M |  1 | loop  | /snap/firefox/886            |
+| loop13            |    7:13 |  0 | 9,1M   |  1 | loop  | /snap/k9s/151                |
+| loop14            |    7:14 |  0 | 219M   |  1 | loop  | /snap/gnome-3-34-1804/77     |
+| loop15            |    7:15 |  0 | 55,5M  |  1 | loop  | /snap/core18/2284            |
+| loop16            |    7:16 |  0 | 51M    |  1 | loop  | /snap/snap-store/547         |
+| loop17            |    7:17 |  0 | 219M   |  1 | loop  | /snap/gnome-3-34-1804/72     |
+| loop18            |    7:18 |  0 | 153M   |  1 | loop  | /snap/firefox/777            |
+| sda               |     8:0 |  1 | 7,2G   |  0 | disk  |                              |
+| ├─sda1            |     8:1 |  1 | 760M   |  0 | part  | /media/wojtek/ARCH_202111    |
+| └─sda2            |     8:2 |  1 | 86M    |  0 | part  |                              |
+| nvme0n1           |   259:0 |  0 | 476,9G |  0 | disk  |                              |
+| ├─nvme0n1p1       |   259:2 |  0 | 512M   |  0 | part  | /boot/efi                    |
+| ├─nvme0n1p2       |   259:3 |  0 | 732M   |  0 | part  | /boot                        |
+| └─nvme0n1p3       |   259:4 |  0 | 475,7G |  0 | part  |                              |
+| └─nvme0n1p3_crypt |   253:0 |  0 | 475,7G |  0 | crypt |                              |
+| ├─vgubuntu-root   |   253:1 |  0 | 474,8G |  0 | lvm   | /                            |
+| └─vgubuntu-swap_1 |   253:2 |  0 | 980M   |  0 | lvm   | [SWAP]                       |
+| nvme1n1           |   259:1 |  0 | 232,9G |  0 | disk  |                              |
+| ├─nvme1n1p1       |   259:5 |  0 | 512M   |  0 | part  |                              |
+| └─nvme1n1p2       |   259:6 |  0 | 232,4G |  0 | part  |                              |
+
+** Unmount pendrive
+#+begin_src bash
+umount /dev/sda1
+#+end_src
+
+** Remove data from pendrive
+#+begin_src bash
+wipels --all /dev/sda
+#+end_src
+
+** Write ISO to pendrive
+#+begin_src bash
+cat /path/to/iso > /dev/sda
+#+end_src
