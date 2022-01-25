@@ -185,3 +185,134 @@ ip netns
 #+RESULTS:
 | blue |
 | red  |
+
+To list interfaces in host:
+#+begin_src bash
+ip link
+#+end_src
+
+#+RESULTS:
+|            1: | lo:               | <LOOPBACK,UP,LOWER_UP>              | mtu               | 65536 | qdisc | noqueue  | state | UNKNOWN | mode | DEFAULT | group | default | qlen | 1000 |
+| link/loopback | 00:00:00:00:00:00 | brd                                 | 00:00:00:00:00:00 |       |       |          |       |         |      |         |       |         |      |      |
+|            2: | enp0s31f6:        | <NO-CARRIER,BROADCAST,MULTICAST,UP> | mtu               |  1500 | qdisc | fq_codel | state | DOWN    | mode | DEFAULT | group | default | qlen | 1000 |
+|    link/ether | 70:85:c2:62:20:01 | brd                                 | ff:ff:ff:ff:ff:ff |       |       |          |       |         |      |         |       |         |      |      |
+|            3: | wlp0s20f0u10:     | <BROADCAST,MULTICAST,UP,LOWER_UP>   | mtu               |  1500 | qdisc | mq       | state | UP      | mode | DORMANT | group | default | qlen | 1000 |
+|    link/ether | 74:da:38:c8:05:21 | brd                                 | ff:ff:ff:ff:ff:ff |       |       |          |       |         |      |         |       |         |      |      |
+
+To list interfaces in namespace:
+#+begin_src bash :dir /sudo::
+sudo ip netns exec red ip link
+#+end_src
+
+#+RESULTS:
+|            1: |               lo: | <LOOPBACK> |               mtu | 65536 | qdisc | noop | state | DOWN | mode | DEFAULT | group | default | qlen | 1000 |
+| link/loopback | 00:00:00:00:00:00 | brd        | 00:00:00:00:00:00 |       |       |      |       |      |      |         |       |         |      |      |
+
+Or simpler:
+#+begin_src bash :dir /sudo::
+sudo ip -n red link
+
+#+end_src
+
+#+RESULTS:
+|            1: |               lo: | <LOOPBACK> |               mtu | 65536 | qdisc | noop | state | DOWN | mode | DEFAULT | group | default | qlen | 1000 |
+| link/loopback | 00:00:00:00:00:00 | brd        | 00:00:00:00:00:00 |       |       |      |       |      |      |         |       |         |      |      |
+
+In namespaces there is visible only loopback interface. There is no other interface from host.
+The same is for arp and route table.
+Arp table for host:
+#+begin_src bash
+arp
+#+end_src
+
+#+RESULTS:
+| Address  | HWtype | HWaddress         | Flags | Mask         | Iface |
+| _gateway | ether  | 00:12:2a:b6:a1:a1 | C     | wlp0s20f0u10 |       |
+
+Arp for namespece
+#+begin_src bash :dir /sudo::
+sudo ip netns exec red arp
+#+end_src
+
+#+RESULTS:
+
+Route for host:
+#+begin_src bash
+route
+#+end_src
+
+#+RESULTS:
+| Kernel      | IP       |       routing | table |        |     |     |              |
+| Destination | Gateway  |       Genmask | Flags | Metric | Ref | Use | Iface        |
+| default     | _gateway |       0.0.0.0 | UG    |    600 |   0 |   0 | wlp0s20f0u10 |
+| 192.168.1.0 | 0.0.0.0  | 255.255.255.0 | U     |    600 |   0 |   0 | wlp0s20f0u10 |
+
+Route for namespece:
+#+begin_src bash :dir /sudo::
+sudo ip netns exec red route
+#+end_src
+
+#+RESULTS:
+| Kernel      | IP      | routing | table |        |     |     |       |
+| Destination | Gateway | Genmask | Flags | Metric | Ref | Use | Iface |
+
+To connect to namespaces there is neccecery to create pipe or "virtual cabel" between them:
+#+begin_src bash :dir /sudo::
+ip link add veth-red type veth peer name veth-blue
+#+end_src
+
+#+RESULTS:
+
+Check links:
+#+begin_src bash
+ip link
+#+end_src
+
+#+RESULTS:
+|            1: | lo:                 | <LOOPBACK,UP,LOWER_UP>              | mtu               | 65536 | qdisc | noqueue  | state | UNKNOWN | mode | DEFAULT | group | default | qlen | 1000 |
+| link/loopback | 00:00:00:00:00:00   | brd                                 | 00:00:00:00:00:00 |       |       |          |       |         |      |         |       |         |      |      |
+|            2: | enp0s31f6:          | <NO-CARRIER,BROADCAST,MULTICAST,UP> | mtu               |  1500 | qdisc | fq_codel | state | DOWN    | mode | DEFAULT | group | default | qlen | 1000 |
+|    link/ether | 70:85:c2:62:20:01   | brd                                 | ff:ff:ff:ff:ff:ff |       |       |          |       |         |      |         |       |         |      |      |
+|            3: | wlp0s20f0u10:       | <BROADCAST,MULTICAST,UP,LOWER_UP>   | mtu               |  1500 | qdisc | mq       | state | UP      | mode | DORMANT | group | default | qlen | 1000 |
+|    link/ether | 74:da:38:c8:05:21   | brd                                 | ff:ff:ff:ff:ff:ff |       |       |          |       |         |      |         |       |         |      |      |
+|            9: | veth-blue@veth-red: | <BROADCAST,MULTICAST,M-DOWN>        | mtu               |  1500 | qdisc | noop     | state | DOWN    | mode | DEFAULT | group | default | qlen | 1000 |
+|    link/ether | 26:7b:c5:f8:fe:bd   | brd                                 | ff:ff:ff:ff:ff:ff |       |       |          |       |         |      |         |       |         |      |      |
+|           10: | veth-red@veth-blue: | <BROADCAST,MULTICAST,M-DOWN>        | mtu               |  1500 | qdisc | noop     | state | DOWN    | mode | DEFAULT | group | default | qlen | 1000 |
+|    link/ether | 7e:92:71:8f:61:fd   | brd                                 | ff:ff:ff:ff:ff:ff |       |       |          |       |         |      |         |       |         |      |      |
+
+Attach red cabel to red namespace:
+#+begin_src bash :dir /sudo::
+ip link set veth-red netns red
+#+end_src
+
+#+RESULTS:
+
+Attach blue cabel to blue namespace:
+#+begin_src bash :dir /sudo::
+ip link set veth-blue netns blue
+#+end_src
+
+#+RESULTS:
+
+Add address ip for both cabels:
+#+begin_src bash :dir /sudo::
+ip -n red addr add 192.168.15.1 dev veth-red
+ip -n blue addr add 192.168.15.2 dev veth-blue
+#+end_src
+
+#+RESULTS:
+
+Switch on both devices:
+#+begin_src bash :dir /sudo::
+ip -n red link set veth-red up
+ip -n blue link set veth-blue up
+#+end_src
+
+#+RESULTS:
+
+Check connection between namespaces
+#+begin_src bash :dir /sudo::
+ip netns exec red ping -c 4 192.168.15.2
+#+end_src
+
+#+RESULTS:
