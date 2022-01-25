@@ -20,6 +20,7 @@
   - [[#unmount-pendrive-1][Unmount pendrive]]
   - [[#remove-data-from-pendrive][Remove data from pendrive]]
   - [[#write-iso-to-pendrive][Write ISO to pendrive]]
+- [[#linux-namespace-networking][Linux namespace networking]]
 
 * Install Doom Emacs
 **  Git 2.23+
@@ -153,3 +154,34 @@ wipels --all /dev/sda
 #+begin_src bash
 cat /path/to/iso > /dev/sda
 #+end_src
+
+* Linux namespace networking
+Network namespaces are use by containers to separete networking.
+Process on container will have pid 1, but the same process in host
+will have another pid.
+#+begin_src bash
+ps aux | grep nginx
+#+end_src
+
+#+RESULTS:
+: chodkows    4219  0.0  0.0   9028  2384 ?        S    06:27   0:00 grep nginx
+
+Host has own interface to communicate to LAN - eth0.
+Host also has own arp and route table to store network information.
+When container is created, there is created namespece.
+Then container also have own arp and route table.
+To create network ns:
+#+begin_src bash :dir /sudo::
+sudo ip netns add red
+sudo ip netns add blue
+#+end_src
+
+#+RESULTS:
+Check ip netns
+#+begin_src bash
+ip netns
+#+end_src
+
+#+RESULTS:
+| blue |
+| red  |
