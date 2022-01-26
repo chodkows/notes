@@ -21,6 +21,8 @@
   - [[#remove-data-from-pendrive][Remove data from pendrive]]
   - [[#write-iso-to-pendrive][Write ISO to pendrive]]
 - [[#linux-namespace-networking][Linux namespace networking]]
+- [[#environment][Environment]]
+  - [[#saas-aware-video-module][SaaS-Aware-Video-Module]]
 
 * Install Doom Emacs
 **  Git 2.23+
@@ -316,3 +318,11 @@ ip netns exec blue arp
 
 #+RESULTS:
 
+
+* Environment
+** SaaS-Aware-Video-Module
+Name                                CloudName    SubscriptionId                        State    IsDefault
+----------------------------------  -----------  ------------------------------------  -------  -----------
+MSI-SWE-PARTNER-STAGE-AZURECLOUD-0  AzureCloud   74545c1b-2b6d-4324-acda-bd921793e015  Enabled  True
+MSI-SWE-CIE-STAGE-AZURECLOUD        AzureCloud   d521004d-004e-4013-bb23-fe359ac90321  Enabled  False
+MSI-SWE-CIE-QA                      AzureCloud   29630a06-fdc5-486d-99c3-8ea14aa8cd2e  Enabled  False
