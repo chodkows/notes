@@ -102,43 +102,19 @@ sudo dd bs=4M if=/home/wojtek/ISO/arcolinuxb-leftwm-v22.01.10-x86_64.iso of=/dev
 * How to prepare bootable pendrive on linux(Option 2)
 ** Check block devices
 #+begin_src bash
-lsblk
+lsblk | grep -v loop
 #+end_src
 
 #+RESULTS:
-| NAME              | MAJ:MIN | RM | SIZE   | RO | TYPE  | MOUNTPOINT                   |
-| loop0             |     7:0 |  0 | 99,3M  |  1 | loop  | /snap/core/11743             |
-| loop1             |     7:1 |  0 | 4K     |  1 | loop  | /snap/bare/5                 |
-| loop2             |     7:2 |  0 | 61,9M  |  1 | loop  | /snap/core20/1270            |
-| loop3             |     7:3 |  0 | 61,8M  |  1 | loop  | /snap/core20/1242            |
-| loop4             |     7:4 |  0 | 99,4M  |  1 | loop  | /snap/core/11993             |
-| loop5             |     7:5 |  0 | 168,6M |  1 | loop  | /snap/emacs/1300             |
-| loop6             |     7:6 |  0 | 55,5M  |  1 | loop  | /snap/core18/2253            |
-| loop7             |     7:7 |  0 | 242,3M |  1 | loop  | /snap/gnome-3-38-2004/76     |
-| loop8             |     7:8 |  0 | 168,6M |  1 | loop  | /snap/emacs/1343             |
-| loop9             |     7:9 |  0 | 247,9M |  1 | loop  | /snap/gnome-3-38-2004/87     |
-| loop10            |    7:10 |  0 | 65,2M  |  1 | loop  | /snap/gtk-common-themes/1519 |
-| loop11            |    7:11 |  0 | 54,2M  |  1 | loop  | /snap/snap-store/558         |
-| loop12            |    7:12 |  0 | 154,6M |  1 | loop  | /snap/firefox/886            |
-| loop13            |    7:13 |  0 | 9,1M   |  1 | loop  | /snap/k9s/151                |
-| loop14            |    7:14 |  0 | 219M   |  1 | loop  | /snap/gnome-3-34-1804/77     |
-| loop15            |    7:15 |  0 | 55,5M  |  1 | loop  | /snap/core18/2284            |
-| loop16            |    7:16 |  0 | 51M    |  1 | loop  | /snap/snap-store/547         |
-| loop17            |    7:17 |  0 | 219M   |  1 | loop  | /snap/gnome-3-34-1804/72     |
-| loop18            |    7:18 |  0 | 153M   |  1 | loop  | /snap/firefox/777            |
-| sda               |     8:0 |  1 | 7,2G   |  0 | disk  |                              |
-| ├─sda1            |     8:1 |  1 | 760M   |  0 | part  | /media/wojtek/ARCH_202111    |
-| └─sda2            |     8:2 |  1 | 86M    |  0 | part  |                              |
-| nvme0n1           |   259:0 |  0 | 476,9G |  0 | disk  |                              |
-| ├─nvme0n1p1       |   259:2 |  0 | 512M   |  0 | part  | /boot/efi                    |
-| ├─nvme0n1p2       |   259:3 |  0 | 732M   |  0 | part  | /boot                        |
-| └─nvme0n1p3       |   259:4 |  0 | 475,7G |  0 | part  |                              |
-| └─nvme0n1p3_crypt |   253:0 |  0 | 475,7G |  0 | crypt |                              |
-| ├─vgubuntu-root   |   253:1 |  0 | 474,8G |  0 | lvm   | /                            |
-| └─vgubuntu-swap_1 |   253:2 |  0 | 980M   |  0 | lvm   | [SWAP]                       |
-| nvme1n1           |   259:1 |  0 | 232,9G |  0 | disk  |                              |
-| ├─nvme1n1p1       |   259:5 |  0 | 512M   |  0 | part  |                              |
-| └─nvme1n1p2       |   259:6 |  0 | 232,4G |  0 | part  |                              |
+| NAME        | MAJ:MIN | RM | SIZE   | RO | TYPE | MOUNTPOINTS |
+| nvme1n1     |   259:0 |  0 | 232,9G |  0 | disk |             |
+| ├─nvme1n1p1 |   259:1 |  0 | 300M   |  0 | part | /boot/efi   |
+| ├─nvme1n1p2 |   259:2 |  0 | 223,8G |  0 | part | /           |
+| └─nvme1n1p3 |   259:3 |  0 | 8,8G   |  0 | part | [SWAP]      |
+| nvme0n1     |   259:4 |  0 | 476,9G |  0 | disk |             |
+| ├─nvme0n1p1 |   259:5 |  0 | 512M   |  0 | part |             |
+| ├─nvme0n1p2 |   259:6 |  0 | 732M   |  0 | part |             |
+| └─nvme0n1p3 |   259:7 |  0 | 475,7G |  0 | part |             |
 
 ** Unmount pendrive
 #+begin_src bash
@@ -164,19 +140,19 @@ ps aux | grep nginx
 #+end_src
 
 #+RESULTS:
-: chodkows    4219  0.0  0.0   9028  2384 ?        S    06:27   0:00 grep nginx
+: chodkows    2402  0.0  0.0   9028  2640 ?        S    05:50   0:00 grep nginx
 
 Host has own interface to communicate to LAN - eth0.
 Host also has own arp and route table to store network information.
 When container is created, there is created namespece.
 Then container also have own arp and route table.
+
 To create network ns:
-#+begin_src bash :dir /sudo::
+#+begin_src bash :dir /sudo:: :results none
 sudo ip netns add red
 sudo ip netns add blue
 #+end_src
 
-#+RESULTS:
 Check ip netns
 #+begin_src bash
 ip netns
@@ -188,38 +164,38 @@ ip netns
 
 To list interfaces in host:
 #+begin_src bash
-ip link
+ip -br link
 #+end_src
 
 #+RESULTS:
-|            1: | lo:               | <LOOPBACK,UP,LOWER_UP>              | mtu               | 65536 | qdisc | noqueue  | state | UNKNOWN | mode | DEFAULT | group | default | qlen | 1000 |
-| link/loopback | 00:00:00:00:00:00 | brd                                 | 00:00:00:00:00:00 |       |       |          |       |         |      |         |       |         |      |      |
-|            2: | enp0s31f6:        | <NO-CARRIER,BROADCAST,MULTICAST,UP> | mtu               |  1500 | qdisc | fq_codel | state | DOWN    | mode | DEFAULT | group | default | qlen | 1000 |
-|    link/ether | 70:85:c2:62:20:01 | brd                                 | ff:ff:ff:ff:ff:ff |       |       |          |       |         |      |         |       |         |      |      |
-|            3: | wlp0s20f0u10:     | <BROADCAST,MULTICAST,UP,LOWER_UP>   | mtu               |  1500 | qdisc | mq       | state | UP      | mode | DORMANT | group | default | qlen | 1000 |
-|    link/ether | 74:da:38:c8:05:21 | brd                                 | ff:ff:ff:ff:ff:ff |       |       |          |       |         |      |         |       |         |      |      |
+| lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK    | UP         | LOWER_UP> |           |
+| enp0s31f6        DOWN           70:85:c2:62:20:01 <NO-CARRIER  | BROADCAST  | MULTICAST | UP>       |
+| wlp0s20f0u10     UP             74:da:38:c8:05:21 <BROADCAST   | MULTICAST  | UP        | LOWER_UP> |
+| veth-blue@veth-red DOWN           26:7b:c5:f8:fe:bd <BROADCAST | MULTICAST  | M-DOWN>   |           |
+| veth-red@veth-blue DOWN           7e:92:71:8f:61:fd <BROADCAST | MULTICAST  | M-DOWN>   |           |
+| v-enp2s0@if8     DOWN           5e:2e:24:5b:9f:24 <BROADCAST   | MULTICAST> |           |           |
 
 To list interfaces in namespace:
 #+begin_src bash :dir /sudo::
-sudo ip netns exec red ip link
+ip netns exec red ip -br link
 #+end_src
 
 #+RESULTS:
-|            1: |               lo: | <LOOPBACK> |               mtu | 65536 | qdisc | noop | state | DOWN | mode | DEFAULT | group | default | qlen | 1000 |
-| link/loopback | 00:00:00:00:00:00 | brd        | 00:00:00:00:00:00 |       |       |      |       |      |      |         |       |         |      |      |
+| lo               DOWN           00:00:00:00:00:00 <LOOPBACK> |           |    |           |
+| veth-red@if4     UP             7e:92:71:8f:61:fd <BROADCAST | MULTICAST | UP | LOWER_UP> |
 
 Or simpler:
 #+begin_src bash :dir /sudo::
-sudo ip -n red link
-
+ip -br -n red link
 #+end_src
 
 #+RESULTS:
-|            1: |               lo: | <LOOPBACK> |               mtu | 65536 | qdisc | noop | state | DOWN | mode | DEFAULT | group | default | qlen | 1000 |
-| link/loopback | 00:00:00:00:00:00 | brd        | 00:00:00:00:00:00 |       |       |      |       |      |      |         |       |         |      |      |
+| lo               DOWN           00:00:00:00:00:00 <LOOPBACK> |           |    |           |
+| veth-red@if4     UP             7e:92:71:8f:61:fd <BROADCAST | MULTICAST | UP | LOWER_UP> |
 
 In namespaces there is visible only loopback interface. There is no other interface from host.
 The same is for arp and route table.
+
 Arp table for host:
 #+begin_src bash
 arp
@@ -230,8 +206,8 @@ arp
 | _gateway | ether  | 00:12:2a:b6:a1:a1 | C     | wlp0s20f0u10 |       |
 
 Arp for namespece
-#+begin_src bash :dir /sudo::
-sudo ip netns exec red arp
+#+begin_src bash :dir /sudo:: :results none
+ip netns exec red arp
 #+end_src
 
 #+RESULTS:
@@ -248,51 +224,52 @@ route
 | 192.168.1.0 | 0.0.0.0  | 255.255.255.0 | U     |    600 |   0 |   0 | wlp0s20f0u10 |
 
 Route for namespece:
-#+begin_src bash :dir /sudo::
-sudo ip netns exec red route
+#+begin_src bash :dir /sudo:: :results none
+ip netns exec red route
 #+end_src
-
-#+RESULTS:
-| Kernel      | IP      | routing | table |        |     |     |       |
-| Destination | Gateway | Genmask | Flags | Metric | Ref | Use | Iface |
 
 To connect to namespaces there is neccecery to create pipe or "virtual cabel" between them:
-#+begin_src bash :dir /sudo::
+#+begin_src bash :dir /sudo:: :results none
 ip link add veth-red type veth peer name veth-blue
 #+end_src
-
-#+RESULTS:
+#+begin_src bash :dir /sudo:: :results none
+ip link set veth-blue up
+ip link set veth-red up
+#+end_src
 
 Check links:
 #+begin_src bash
-ip link
+ip -br link
 #+end_src
 
 #+RESULTS:
-|            1: | lo:                 | <LOOPBACK,UP,LOWER_UP>              | mtu               | 65536 | qdisc | noqueue  | state | UNKNOWN | mode | DEFAULT | group | default | qlen | 1000 |
-| link/loopback | 00:00:00:00:00:00   | brd                                 | 00:00:00:00:00:00 |       |       |          |       |         |      |         |       |         |      |      |
-|            2: | enp0s31f6:          | <NO-CARRIER,BROADCAST,MULTICAST,UP> | mtu               |  1500 | qdisc | fq_codel | state | DOWN    | mode | DEFAULT | group | default | qlen | 1000 |
-|    link/ether | 70:85:c2:62:20:01   | brd                                 | ff:ff:ff:ff:ff:ff |       |       |          |       |         |      |         |       |         |      |      |
-|            3: | wlp0s20f0u10:       | <BROADCAST,MULTICAST,UP,LOWER_UP>   | mtu               |  1500 | qdisc | mq       | state | UP      | mode | DORMANT | group | default | qlen | 1000 |
-|    link/ether | 74:da:38:c8:05:21   | brd                                 | ff:ff:ff:ff:ff:ff |       |       |          |       |         |      |         |       |         |      |      |
-|            9: | veth-blue@veth-red: | <BROADCAST,MULTICAST,M-DOWN>        | mtu               |  1500 | qdisc | noop     | state | DOWN    | mode | DEFAULT | group | default | qlen | 1000 |
-|    link/ether | 26:7b:c5:f8:fe:bd   | brd                                 | ff:ff:ff:ff:ff:ff |       |       |          |       |         |      |         |       |         |      |      |
-|           10: | veth-red@veth-blue: | <BROADCAST,MULTICAST,M-DOWN>        | mtu               |  1500 | qdisc | noop     | state | DOWN    | mode | DEFAULT | group | default | qlen | 1000 |
-|    link/ether | 7e:92:71:8f:61:fd   | brd                                 | ff:ff:ff:ff:ff:ff |       |       |          |       |         |      |         |       |         |      |      |
+| lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK    | UP         | LOWER_UP> |           |
+| enp0s31f6        DOWN           70:85:c2:62:20:01 <NO-CARRIER  | BROADCAST  | MULTICAST | UP>       |
+| wlp0s20f0u10     UP             74:da:38:c8:05:21 <BROADCAST   | MULTICAST  | UP        | LOWER_UP> |
+| veth-blue@veth-red UP             26:7b:c5:f8:fe:bd <BROADCAST | MULTICAST  | UP        | LOWER_UP> |
+| veth-red@veth-blue UP             7e:92:71:8f:61:fd <BROADCAST | MULTICAST  | UP        | LOWER_UP> |
+| v-enp2s0@if8     DOWN           5e:2e:24:5b:9f:24 <BROADCAST   | MULTICAST> |           |           |
 
 Attach red cabel to red namespace:
-#+begin_src bash :dir /sudo::
+#+begin_src bash :dir /sudo:: :results none
 ip link set veth-red netns red
 #+end_src
 
-#+RESULTS:
-
 Attach blue cabel to blue namespace:
-#+begin_src bash :dir /sudo::
+#+begin_src bash :dir /sudo:: :results none
 ip link set veth-blue netns blue
 #+end_src
 
+#+begin_src bash :dir /sudo::
+ip -br -n red link
+ip -br -n blue link
+#+end_src
+
 #+RESULTS:
+| lo            | DOWN | 00:00:00:00:00:00 | <LOOPBACK>                        |
+| veth-red@if4  | UP   | 7e:92:71:8f:61:fd | <BROADCAST,MULTICAST,UP,LOWER_UP> |
+| lo            | DOWN | 00:00:00:00:00:00 | <LOOPBACK>                        |
+| veth-blue@if5 | UP   | 26:7b:c5:f8:fe:bd | <BROADCAST,MULTICAST,UP,LOWER_UP> |
 
 Add address ip for both cabels:
 #+begin_src bash :dir /sudo::
@@ -302,17 +279,40 @@ ip -n blue addr add 192.168.15.2 dev veth-blue
 
 #+RESULTS:
 
-Switch on both devices:
 #+begin_src bash :dir /sudo::
+ip -br -n red a | grep -v lo
+ip -br -n blue a | grep -v lo
+#+end_src
+
+#+RESULTS:
+| veth-red@if4  | UP | 192.168.15.1/32 | fe80::7c92:71ff:fe8f:61fd/64 |
+| veth-blue@if5 | UP | 192.168.15.2/32 | fe80::247b:c5ff:fef8:febd/64 |
+
+Switch on both devices:
+#+begin_src bash :dir /sudo:: :results none
 ip -n red link set veth-red up
 ip -n blue link set veth-blue up
 #+end_src
 
-#+RESULTS:
-
-Check connection between namespaces
 #+begin_src bash :dir /sudo::
-ip netns exec red ping -c 4 192.168.15.2
+ip -br -n red a | grep -v lo
+ip -br -n blue a | grep -v lo
 #+end_src
 
 #+RESULTS:
+| veth-red@if4  | UP | 192.168.15.1/32 | fe80::7c92:71ff:fe8f:61fd/64 |
+| veth-blue@if5 | UP | 192.168.15.2/32 | fe80::247b:c5ff:fef8:febd/64 |
+
+Check connection between namespaces
+#+begin_src bash :dir /sudo:: :results none
+ip netns exec red ping -c 3 192.168.15.2
+#+end_src
+
+#+RESULTS:
+
+#+begin_src bash :dir /sudo::
+ip netns exec blue arp
+#+end_src
+
+#+RESULTS:
+
