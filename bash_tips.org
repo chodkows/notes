@@ -1,0 +1,878 @@
+#+TITLE: Bash Tips
+
+
+* How to take json output and prepare ip addresses in CIDR notation.
+** Get ips(doen't work in org)
+#+begin_src bash :results none
+az cdn edge-node list | jq -r '.[] | select(.id == "/providers/Microsoft.Cdn/edgenodes/Standard_Verizon") | .ipAddressGroups[0].ipv4Addresses[] | [.baseIpAddress,.prefixLength] | @tsv' | sed 's|\t|/|g' > ips.json
+#+end_src
+
+** Input json(this json is output of above command):
+#+begin_src bash :results none
+cat <<EOF > ips.json
+[
+  {
+    "id": "/providers/Microsoft.Cdn/edgenodes/Standard_Verizon",
+    "ipAddressGroups": [
+      {
+        "deliveryRegion": "All",
+        "ipv4Addresses": [
+          {
+            "baseIpAddress": "5.104.64.0",
+            "prefixLength": 21
+          },
+          {
+            "baseIpAddress": "46.22.64.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "61.221.181.64",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "68.232.32.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "72.21.80.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "88.194.45.128",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "93.184.208.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "101.226.203.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "108.161.240.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "110.232.176.0",
+            "prefixLength": 22
+          },
+          {
+            "baseIpAddress": "117.18.232.0",
+            "prefixLength": 21
+          },
+          {
+            "baseIpAddress": "117.103.183.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "120.132.137.0",
+            "prefixLength": 25
+          },
+          {
+            "baseIpAddress": "121.156.59.224",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "121.189.46.0",
+            "prefixLength": 23
+          },
+          {
+            "baseIpAddress": "152.195.0.0",
+            "prefixLength": 16
+          },
+          {
+            "baseIpAddress": "180.240.184.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "192.16.0.0",
+            "prefixLength": 18
+          },
+          {
+            "baseIpAddress": "192.30.0.0",
+            "prefixLength": 19
+          },
+          {
+            "baseIpAddress": "192.229.128.0",
+            "prefixLength": 17
+          },
+          {
+            "baseIpAddress": "194.255.210.64",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "198.7.16.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "203.74.4.64",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "213.64.234.0",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "213.65.58.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "68.140.206.0",
+            "prefixLength": 23
+          },
+          {
+            "baseIpAddress": "68.130.0.0",
+            "prefixLength": 17
+          },
+          {
+            "baseIpAddress": "152.190.247.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "65.222.137.0",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "65.222.145.128",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "65.198.79.64",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "65.199.146.192",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "65.200.151.160",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "65.200.157.192",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "68.130.128.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "68.130.136.0",
+            "prefixLength": 21
+          },
+          {
+            "baseIpAddress": "65.200.46.128",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "213.175.80.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "152.199.0.0",
+            "prefixLength": 16
+          },
+          {
+            "baseIpAddress": "36.67.255.152",
+            "prefixLength": 29
+          },
+          {
+            "baseIpAddress": "194.255.242.160",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "195.67.219.64",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "88.194.47.224",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "203.66.205.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "110.164.36.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "119.46.85.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "49.231.126.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "136.228.144.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "64.12.0.0",
+            "prefixLength": 16
+          }
+        ],
+        "ipv6Addresses": [
+          {
+            "baseIpAddress": "2001:2011:c002::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2001:2040:c006::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2001:2060:bffb::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2001:b032:c101::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2405:8f00:edca::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2405:8f00:edcb::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2606:2800::",
+            "prefixLength": 32
+          },
+          {
+            "baseIpAddress": "2600:40ff:fffb::",
+            "prefixLength": 56
+          },
+          {
+            "baseIpAddress": "2a02:16d8:103::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2600:40fc::",
+            "prefixLength": 32
+          },
+          {
+            "baseIpAddress": "2403:6200:ffff:ffa1::",
+            "prefixLength": 64
+          },
+          {
+            "baseIpAddress": "2001:fb0:109f:8005::",
+            "prefixLength": 64
+          },
+          {
+            "baseIpAddress": "2405:9800:61:1::",
+            "prefixLength": 64
+          },
+          {
+            "baseIpAddress": "2404:b300:33:1::",
+            "prefixLength": 64
+          }
+        ]
+      }
+    ],
+    "name": "Standard_Verizon",
+    "systemData": null,
+    "type": "Microsoft.Cdn/edgenodes"
+  },
+  {
+    "id": "/providers/Microsoft.Cdn/edgenodes/Premium_Verizon",
+    "ipAddressGroups": [
+      {
+        "deliveryRegion": "All",
+        "ipv4Addresses": [
+          {
+            "baseIpAddress": "5.104.64.0",
+            "prefixLength": 21
+          },
+          {
+            "baseIpAddress": "46.22.64.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "61.221.181.64",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "68.232.32.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "72.21.80.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "88.194.45.128",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "93.184.208.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "101.226.203.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "108.161.240.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "110.232.176.0",
+            "prefixLength": 22
+          },
+          {
+            "baseIpAddress": "117.18.232.0",
+            "prefixLength": 21
+          },
+          {
+            "baseIpAddress": "117.103.183.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "120.132.137.0",
+            "prefixLength": 25
+          },
+          {
+            "baseIpAddress": "121.156.59.224",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "121.189.46.0",
+            "prefixLength": 23
+          },
+          {
+            "baseIpAddress": "152.195.0.0",
+            "prefixLength": 16
+          },
+          {
+            "baseIpAddress": "180.240.184.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "192.16.0.0",
+            "prefixLength": 18
+          },
+          {
+            "baseIpAddress": "192.30.0.0",
+            "prefixLength": 19
+          },
+          {
+            "baseIpAddress": "192.229.128.0",
+            "prefixLength": 17
+          },
+          {
+            "baseIpAddress": "194.255.210.64",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "198.7.16.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "203.74.4.64",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "213.64.234.0",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "213.65.58.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "68.140.206.0",
+            "prefixLength": 23
+          },
+          {
+            "baseIpAddress": "68.130.0.0",
+            "prefixLength": 17
+          },
+          {
+            "baseIpAddress": "152.190.247.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "65.222.137.0",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "65.222.145.128",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "65.198.79.64",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "65.199.146.192",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "65.200.151.160",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "65.200.157.192",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "68.130.128.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "68.130.136.0",
+            "prefixLength": 21
+          },
+          {
+            "baseIpAddress": "65.200.46.128",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "213.175.80.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "152.199.0.0",
+            "prefixLength": 16
+          },
+          {
+            "baseIpAddress": "36.67.255.152",
+            "prefixLength": 29
+          },
+          {
+            "baseIpAddress": "194.255.242.160",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "195.67.219.64",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "88.194.47.224",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "203.66.205.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "110.164.36.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "119.46.85.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "49.231.126.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "136.228.144.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "64.12.0.0",
+            "prefixLength": 16
+          }
+        ],
+        "ipv6Addresses": [
+          {
+            "baseIpAddress": "2001:2011:c002::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2001:2040:c006::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2001:2060:bffb::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2001:b032:c101::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2405:8f00:edca::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2405:8f00:edcb::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2606:2800::",
+            "prefixLength": 32
+          },
+          {
+            "baseIpAddress": "2600:40ff:fffb::",
+            "prefixLength": 56
+          },
+          {
+            "baseIpAddress": "2a02:16d8:103::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2600:40fc::",
+            "prefixLength": 32
+          },
+          {
+            "baseIpAddress": "2403:6200:ffff:ffa1::",
+            "prefixLength": 64
+          },
+          {
+            "baseIpAddress": "2001:fb0:109f:8005::",
+            "prefixLength": 64
+          },
+          {
+            "baseIpAddress": "2405:9800:61:1::",
+            "prefixLength": 64
+          },
+          {
+            "baseIpAddress": "2404:b300:33:1::",
+            "prefixLength": 64
+          }
+        ]
+      }
+    ],
+    "name": "Premium_Verizon",
+    "systemData": null,
+    "type": "Microsoft.Cdn/edgenodes"
+  },
+  {
+    "id": "/providers/Microsoft.Cdn/edgenodes/Custom_Verizon",
+    "ipAddressGroups": [
+      {
+        "deliveryRegion": "All",
+        "ipv4Addresses": [
+          {
+            "baseIpAddress": "5.104.64.0",
+            "prefixLength": 21
+          },
+          {
+            "baseIpAddress": "46.22.64.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "61.221.181.64",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "68.232.32.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "72.21.80.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "88.194.45.128",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "93.184.208.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "101.226.203.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "108.161.240.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "110.232.176.0",
+            "prefixLength": 22
+          },
+          {
+            "baseIpAddress": "117.18.232.0",
+            "prefixLength": 21
+          },
+          {
+            "baseIpAddress": "117.103.183.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "120.132.137.0",
+            "prefixLength": 25
+          },
+          {
+            "baseIpAddress": "121.156.59.224",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "121.189.46.0",
+            "prefixLength": 23
+          },
+          {
+            "baseIpAddress": "152.195.0.0",
+            "prefixLength": 16
+          },
+          {
+            "baseIpAddress": "180.240.184.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "192.16.0.0",
+            "prefixLength": 18
+          },
+          {
+            "baseIpAddress": "192.30.0.0",
+            "prefixLength": 19
+          },
+          {
+            "baseIpAddress": "192.229.128.0",
+            "prefixLength": 17
+          },
+          {
+            "baseIpAddress": "194.255.210.64",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "198.7.16.0",
+            "prefixLength": 20
+          },
+          {
+            "baseIpAddress": "203.74.4.64",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "213.64.234.0",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "213.65.58.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "68.140.206.0",
+            "prefixLength": 23
+          },
+          {
+            "baseIpAddress": "68.130.0.0",
+            "prefixLength": 17
+          },
+          {
+            "baseIpAddress": "152.190.247.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "65.222.137.0",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "65.222.145.128",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "65.198.79.64",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "65.199.146.192",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "65.200.151.160",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "65.200.157.192",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "68.130.128.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "68.130.136.0",
+            "prefixLength": 21
+          },
+          {
+            "baseIpAddress": "65.200.46.128",
+            "prefixLength": 26
+          },
+          {
+            "baseIpAddress": "213.175.80.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "152.199.0.0",
+            "prefixLength": 16
+          },
+          {
+            "baseIpAddress": "36.67.255.152",
+            "prefixLength": 29
+          },
+          {
+            "baseIpAddress": "194.255.242.160",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "195.67.219.64",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "88.194.47.224",
+            "prefixLength": 27
+          },
+          {
+            "baseIpAddress": "203.66.205.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "110.164.36.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "119.46.85.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "49.231.126.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "136.228.144.0",
+            "prefixLength": 24
+          },
+          {
+            "baseIpAddress": "64.12.0.0",
+            "prefixLength": 16
+          }
+        ],
+        "ipv6Addresses": [
+          {
+            "baseIpAddress": "2001:2011:c002::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2001:2040:c006::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2001:2060:bffb::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2001:b032:c101::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2405:8f00:edca::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2405:8f00:edcb::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2606:2800::",
+            "prefixLength": 32
+          },
+          {
+            "baseIpAddress": "2600:40ff:fffb::",
+            "prefixLength": 56
+          },
+          {
+            "baseIpAddress": "2a02:16d8:103::",
+            "prefixLength": 48
+          },
+          {
+            "baseIpAddress": "2600:40fc::",
+            "prefixLength": 32
+          },
+          {
+            "baseIpAddress": "2403:6200:ffff:ffa1::",
+            "prefixLength": 64
+          },
+          {
+            "baseIpAddress": "2001:fb0:109f:8005::",
+            "prefixLength": 64
+          },
+          {
+            "baseIpAddress": "2405:9800:61:1::",
+            "prefixLength": 64
+          },
+          {
+            "baseIpAddress": "2404:b300:33:1::",
+            "prefixLength": 64
+          }
+        ]
+      }
+    ],
+    "name": "Custom_Verizon",
+    "systemData": null,
+    "type": "Microsoft.Cdn/edgenodes"
+  }
+]
+EOF
+#+end_src
+
+** Script
+#+begin_src bash :results output
+  while read -r ip; do
+      echo $ip
+  done <<< $(cat ips.json | jq -r '.[] | select(.id == "/providers/Microsoft.Cdn/edgenodes/Standard_Verizon") | .ipAddressGroups[0].ipv4Addresses[] | [.baseIpAddress,.prefixLength] | @tsv' | sed 's|\t|/|g')
+#+end_src
+
+#+RESULTS:
+#+begin_example
+5.104.64.0/21
+46.22.64.0/20
+61.221.181.64/26
+68.232.32.0/20
+72.21.80.0/20
+88.194.45.128/26
+93.184.208.0/20
+101.226.203.0/24
+108.161.240.0/20
+110.232.176.0/22
+117.18.232.0/21
+117.103.183.0/24
+120.132.137.0/25
+121.156.59.224/27
+121.189.46.0/23
+152.195.0.0/16
+180.240.184.0/24
+192.16.0.0/18
+192.30.0.0/19
+192.229.128.0/17
+194.255.210.64/26
+198.7.16.0/20
+203.74.4.64/26
+213.64.234.0/26
+213.65.58.0/24
+68.140.206.0/23
+68.130.0.0/17
+152.190.247.0/24
+65.222.137.0/26
+65.222.145.128/26
+65.198.79.64/26
+65.199.146.192/26
+65.200.151.160/27
+65.200.157.192/27
+68.130.128.0/24
+68.130.136.0/21
+65.200.46.128/26
+213.175.80.0/24
+152.199.0.0/16
+36.67.255.152/29
+194.255.242.160/27
+195.67.219.64/27
+88.194.47.224/27
+203.66.205.0/24
+110.164.36.0/24
+119.46.85.0/24
+49.231.126.0/24
+136.228.144.0/24
+64.12.0.0/16
+#+end_example
+0
