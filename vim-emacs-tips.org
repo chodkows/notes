@@ -1,0 +1,10 @@
+#+TITLE: Vim Emacs Tips
+
+* Substitution
+Porczas uzywania substytucji, mozna wykorzystac cliboard, zeby wkleic kopiowany fragment.
+%s/<CTR-r>"a/<CTR-r>"b"/gc
+czyli:
+- przed wykonaniem akcji substytucji do rejestru :reg pod uzywajac "ay kopuje wyraz do zmiany
+- uzywajac "by kopuje wyraz na ktory bedzie zmieniony fragment
+- w :reg pojawią sie literki a i b z odpowiednimi wyrazami
+- substytucja

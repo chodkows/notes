@@ -1,0 +1,59 @@
+#+TITLE: Web Client Requests
+
+* Requests
+** First request for index.html
+#+begin_src bash :results output
+curl 'https://aware.dev.commandcentral.com/?sv=2020-08-04&ss=bfqt&srt=sco&sp=rwdlacupitfx&se=2022-02-04T16:29:25Z&st=2022-02-04T08:29:25Z&spr=https&sig=OMsyBrD98oCHvHS4C1PwXqkngvX9cIbtOoBeKrw3c20%3D' \
+  -H 'authority: aware.dev.commandcentral.com' \
+  -H 'cache-control: max-age=0' \
+  -H 'sec-ch-ua: " Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Linux"' \
+  -H 'upgrade-insecure-requests: 1' \
+  -H 'user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36' \
+  -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9' \
+  -H 'sec-fetch-site: none' \
+  -H 'sec-fetch-mode: navigate' \
+  -H 'sec-fetch-user: ?1' \
+  -H 'sec-fetch-dest: document' \
+  -H 'accept-language: en-US,en;q=0.9' \
+  --compressed
+#+end_src
+
+
+** Second
+#+begin_src bash :results output
+curl 'https://aware.dev.commandcentral.com/?sv=2020-08-04&ss=bfqt&srt=sco&sp=rwdlacupitfx&se=2022-02-04T15:29:41Z&st=2022-02-04T07:29:41Z&spr=https&sig=gKSY2eG1mKXYLtFyRw73pIZqMs1tlzl9qUp%2Bfl9Fdmc%u3D' \
+  -H 'authority: aware.dev.commandcentral.com' \
+  -H 'cache-control: max-age=0' \
+  -H 'sec-ch-ua: " Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Linux"' \
+  -H 'upgrade-insecure-requests: 1' \
+  -H 'user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36' \
+  -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9' \
+  -H 'sec-fetch-site: none' \
+  -H 'sec-fetch-mode: navigate' \
+  -H 'sec-fetch-user: ?1' \
+  -H 'sec-fetch-dest: document' \
+  -H 'accept-language: en-US,en;q=0.9' \
+  --compressed
+#+end_src
+
+* CDN rule
+#+begin_src bash
+az cdn endpoint rule add --action-name UrlRedirect \
+                         --custom-querystring '?sv=2020-08-04&ss=bfqt&srt=sco&sp=rwdlacupitfx&se=2022-02-04T15:29:41Z&st=2022-02-04T07:29:41Z&spr=https&sig=gKSY2eG1mKXYLtFyRw73pIZqMs1tlzl9qUp%2Bfl9Fdmc%u3D' \
+                         --order 0 \
+                         --name aware-webclient-comm-dev \
+                         --profile-name aware-webclient-comm-dev \
+                         --query-string-behavior Include \
+                         --redirect-type Found \
+                         --resource-group saas-aware-eastus \
+                         --rule-name allowCdnAccessStorage \
+                         --subscription 9b5af381-09f8-44d6-ad0d-7196d001037e
+
+
+#+end_src
+
+#+RESULTS:
