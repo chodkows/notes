@@ -21,6 +21,10 @@
   - [[#remove-data-from-pendrive][Remove data from pendrive]]
   - [[#write-iso-to-pendrive][Write ISO to pendrive]]
 - [[#linux-namespace-networking][Linux namespace networking]]
+- [[#zjebanos][ZjebanOS]]
+  - [[#nie-dziala-ls][Nie dziala ls]]
+  - [[#nginx][nginx]]
+  - [[#apache][apache]]
 - [[#environment][Environment]]
   - [[#saas-aware-video-module][SaaS-Aware-Video-Module]]
 
@@ -318,6 +322,143 @@ ip netns exec blue arp
 
 #+RESULTS:
 
+* ZjebanOS
+** Nie dziala ls
+whereis ls
+/bin/ls
+type ls
+ls is aliased to `echo segmentation fault;#`
+alias
+alias ls='echo segmentation fault;#'
+unalias ls
+
+** nginx
+*** $ /etc/init.d/nginx start
+nginx: [emerg] unknown directive "listen 80" in /etc/nginx/conf.d/default.conf:5
+nginx: configuration file /etc/nginx/nginx.conf test failed
+*** $ vim /etc/nginx/conf.d/default.conf
+wyglada wszystko ok
+*** $ grep listen /etc/nginx/conf.d/default.conf | hexdump -c
+0000000  \t   l   i   s   t   e   n 302 240   8   0       d   e   f   a
+0000010   u   l   t   _   s   e   r   v   e   r   ;  \n
+*** $ netstat -plnt (p drukowanie nazwy procesu, l listen, n bez rozwiazywania nazw, t tcp)
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      241/nginx.conf
+*** $ curl localhost
+<html>
+<head><title>301 Moved Permanently</title></head>
+<body>
+<center><h1>301 Moved Permanently</h1></center>
+<hr><center>openresty</center>
+</body>
+</html>
+*** $ curl -I localhost
+HTTP/1.1 301 Moved Permanently
+server: openresty
+date: Tue, 08 Feb 2022 16:23:52 GMT
+content-type: text/html
+content-length: 166
+location: http://www.pornhub.com/
+x-request-id: 62029918-42FE72290050552A-477BB49
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+*** cat /etc/hosts
+66.254.114.41	localhost
+*** vim /etc/hosts
+127.0.0.1 localhost
+*** curl localhost
+<html>
+<head><title>502 Bad Gateway</title></head>
+<body bgcolor="white">
+<center><h1>502 Bad Gateway</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+*** cat /etc/nginx/conf.d/default.conf
+# This is a default site configuration which will simply return 404, preventing
+# chance access to any other virtualhost.
+
+server {
+	listen 80 default_server;
+
+	# Everything is a 404
+	location / {
+		proxy_pass http://127.0.0.1:8080;
+	}
+
+	access_log /var/log/nginx/serwisy/obliczenia.log main;
+
+	# You may need this to prevent return 404 recursion.
+	location = /404.html {
+		internal;
+	}
+}
+
+Nginx przekierowuje wszytko na port 8080
+*** netstat -plnt
+Dziala tylko nginx na porcie 80
+** apache
+*** /etc/init.d/apache2 start
+Can't load /lib/ld-musl-x86_64.so.2 (0x7f57f1c15000)
+*** ls -l /lib/ld-musl-x86_64.so.2
+istnieje tylko /lib/ld-musl-x86_64.so.1
+*** ln -s /lib/ld-musl-x86_64.so.1 /lib/ld-musl-x86_64.so.2
+*** /etc/init.d/apache2 restart
+Can't load /lib/ld-musl-x86_64.so.2 (0x7f57f1c15000)
+Can't load /lib/ld-musl-x86_64.so.2 (0x7f57f1c15000)
+*** strace -s1000 -ff -o /tmp/testy /etc/init.d/apache2 restart (-ff podazanie za dziecmi, -o output)
+*** cd /tmp
+*** grep -rli 'ld-musl-x86_64.so.2' testy* (-r recursive -l nazwa plika -i case insensitive)
+apache od razu rzuca bledem zaraz po otwarciu pliku
+*** /etc/init.d/apache2 restart
+nie moze pisac do /etc/sshd/ ale po co?
+ale wyzej jest: AH00526: Syntax error on line 1 of /etc/apache2/conf.d/security.conf:
+*** rm /etc/apache2/conf.d/security.conf
+*** netstat -plnt
+*** curl localhost
+znowu openresty. Cos nadpisalo. jakis cron
+*** ps auxf
+PID   USER     TIME   COMMAND
+    1 root       0:00 /sbin/init
+   94 root       0:00 /bin/bash
+  108 root       0:00 ash
+  203 root       0:00 vim /etc/nginx/conf.d/default.conf
+  241 root       0:00 nginx: master process /usr/sbin/nginx -c /etc/nginx/nginx.conf
+  242 nginx      0:00 nginx: worker process
+  243 nginx      0:00 nginx: worker process
+  244 nginx      0:00 nginx: worker process
+  245 nginx      0:00 nginx: worker process
+  271 root       0:00 agetty apache2 binfmt bootmisc consolefont devfs dmesg fsck functions.sh hostnam
+  502 root       0:00 /usr/sbin/httpd -d /var/www -f /etc/apache2/httpd.conf -k start
+  506 apache     0:00 /usr/sbin/httpd -d /var/www -f /etc/apache2/httpd.conf -k start
+  507 apache     0:00 /usr/sbin/httpd -d /var/www -f /etc/apache2/httpd.conf -k start
+  508 apache     0:00 /usr/sbin/httpd -d /var/www -f /etc/apache2/httpd.conf -k start
+  509 apache     0:00 /usr/sbin/httpd -d /var/www -f /etc/apache2/httpd.conf -k start
+  510 apache     0:00 /usr/sbin/httpd -d /var/www -f /etc/apache2/httpd.conf -k start
+  516 root       0:00 ps auxf
+*** crontab -l
+# do daily/weekly/monthly maintenance
+# min	hour	day	month	weekday	command
+*/15	*	*	*	*	run-parts /etc/periodic/15min -> cos zmienia sie co 15 minut
+0	*	*	*	*	run-parts /etc/periodic/hourly
+0	2	*	*	*	run-parts /etc/periodic/daily
+0	3	*	*	6	run-parts /etc/periodic/weekly
+0	5	1	*	*	run-parts /etc/periodic/monthly
+*** grep -rli '66.254.114.41' /etc/
+*** curl localhost
+403 z apacha-> logi -> /etc/strona
+
+*** cd /etc/apache2/
+*** grep -rli 'index.html' . -> httpd.conf
+*** vim httpd.conf -> /index.http -> dopisanie po spacji index.php
+*** /etc/init.d/apache2 restart
+*** curl localhost ->
+-> dziala, ale nie pokazuje wyniku
+-> spawdzenie index.php
+-> zapisuje do /cache/obliczenia
+-> cache ma prawa 777
+-> obliczenia ma 770 dla usera i grupy nginx
+-> chmod 777 obliczenia
 
 * Environment
 ** SaaS-Aware-Video-Module

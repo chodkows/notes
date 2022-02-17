@@ -1,6 +1,5 @@
 #+TITLE: Bash Tips
 
-
 * How to take json output and prepare ip addresses in CIDR notation.
 ** Get ips(doen't work in org)
 #+begin_src bash :results none

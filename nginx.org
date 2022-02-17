@@ -1,0 +1,38 @@
+* Nginx timeouts
+** Frontend Timeouts
+*** client_header_timeout
+Defines a timeout for reading client request header. If a client does not transmit the entire header within this time, the request is terminated with the 408(Request Time-out) error. Default 60s.
+
+Jeśli klient wysyła headery i czas ich wysyłania jest dłuższy niż 60s, połączenie zostanie przerwane z kodem błędu 408.
+*** client_body_timeout
+Defines a timeout for reading client request body. The timeout is set only for a period between two successive read operations, not for the transmission of the whole request body. If a client does not transmitt anything with this time, the request is terminated with the 408(Request Time-out) error. Default 60s.
+
+Jeśli klient wysyła body i przerwa pomiędzy pierwszym "porcją" i kolejną wynosi więcej niż 60s, połączenie zostanie przerwane z kodem błędu 408.
+*** send_timeout
+Sets a timeout for transmitting a resoponse to the client. The timeout is set only between two succesive write operations, not for the transmission of the whole response. If the client does not receive anything with this time, the connection is closed. Defautl 60s.
+
+Jeśli klient wysyła request, nginx przesyła request do backendu, backend odpowiada i jeśli klient przy odbieraniu kolejnych "porcji" już od nginx czeka dłużej niż 60s, nginx przerwie połącznie z kodem błędy 408.
+*** keepalive_timeout
+The first parameter sets a timeout during which a keep-alive client connection will stay open on the server side. The zero value disables keep-alive client connections. The optional second parameter sets a value in the "Keep-Alive: timeout=time" response header field. Two parameters may differ. Default 75s.
+*** lingering_timeout
+When lingering_close is in effect, this directive specifies the maximum waiting time for more client data to arrive. If data are not received during this time the connection is closed. Otherwise, the data are read and ignored, and nginx starts waiting for more data again. The "wait-read-ignore" cycle is repeated, but no longer specified by the lingering_time directive.
+
+Służy do czystego zamknięcia połączenia.
+*** resolver_timeout
+Sets a timeot for name resolution. 30s.
+Jeśli nginx nie może znaleźć servera backendu, po 30s zakończy połączenie od klineta.
+** Backend Timeouts
+*** proxy_content_timeout
+Defines a timeout for establishing a connection with a proxied server. It should be noted that this timeout cannot usually exceed 75 seconds.
+Jeśli serwery są blisko, czas powinien być zmniejszony np. do 3s.
+*** proxy_send_timeout
+Sets a timeout for transmitting a request to the proxied server. The timeout is set only between two successive write operations, not for the transmission of the whole request. If the proxied server does not receive anything with tihs time, connection is closed. (60s?)
+*** proxy_read_timeout
+Defines a timeout for reading a response from the proxied server. The timeout is set only between two successive read operation, not for the transmission of the whole response. If the proxied server does not transmit anything with this time the connection is closed. (60s?)
+*** keepalive_timeout
+Set a timeout during which an idle keepalive connection to an upstream server will stay open.
+*** proxy_next_upstream_timeout
+Limits the time during which a request can be passed to the next server. The 0 value turns off this limitation. Default 0.
+
+** Slowloris DDos
+Allows an attacker to overhelm a target server by opening and maintaining many simultaneous HTTP connections between the attacker ant the target.
