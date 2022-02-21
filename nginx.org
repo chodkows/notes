@@ -36,3 +36,187 @@ Limits the time during which a request can be passed to the next server. The 0 v
 
 ** Slowloris DDos
 Allows an attacker to overhelm a target server by opening and maintaining many simultaneous HTTP connections between the attacker ant the target.
+
+* nginx.conf
+** How to serve static content
+#+begin_src conf
+http {
+    server {
+        listen 80;
+        root /home/chodkows/Git/nginx/; # here is index.html
+    }
+    location /Pictures {
+        root /home/chodkows/; # when localhost/Pictures will go to ~/Pictures
+    }
+    location ~ .jpg$ { # ~ means regexp, so every file which ends with jpg
+        return 403;
+    }
+
+    server {
+        listen 8888;
+        location / {
+            proxy_pass http://localhost:80/; # redirect to localhost:80
+        }
+
+        location /img {
+            proxy_pass http://localhost:80/Pictures/;
+        }
+    }
+}
+
+events{}
+#+end_src
+
+** How to loadbalance with roundrobin
+#+begin_src bash
+docker run -d -p 2222:9999 -e APID=2222 nodeapp
+docker run -d -p 3333:9999 -e APID=3333 nodeapp
+docker run -d -p 4444:9999 -e APID=4444 nodeapp
+docker run -d -p 5555:9999 -e APID=5555 nodeapp
+#+end_src
+
+#+RESULTS:
+| bcdeb581ad353a9e353a37186a9de10385baf9b6f30e20e5cc3a782d6e1497ad |
+| 80ecd5450e28dc4d4c752d5e50a13c206edb2201132a81e703956c3c9b5d9ee7 |
+| e337829ab090934627f5f6c6d0819c188bcc5f8f947def14120243d825894245 |
+| 7da1eeaa8c23e74e48a32300efbe8fa460f3264bcf9a1c5aec95038c356b41a1 |
+
+#+begin_src conf
+http {
+    upstream allbackend {
+        server 127.0.0.1:2222;
+        server 127.0.0.1:3333;
+        server 127.0.0.1:4444;
+        server 127.0.0.1:5555;
+    }
+
+    server {
+        listen 80;
+        location / {
+            proxy_pass http://allbackend/;
+        }
+    }
+}
+events {}
+#+end_src
+
+** Sticky session
+#+begin_src conf
+http {
+    upstream allbackend {
+        ip_hash; # request from one ip will always go to one backend - sticky session
+        server 127.0.0.1:2222;
+        server 127.0.0.1:3333;
+        server 127.0.0.1:4444;
+        server 127.0.0.1:5555;
+    }
+
+    server {
+        listen 80;
+        location / {
+            proxy_pass http://allbackend/;
+        }
+    }
+}
+events {}
+#+end_src
+** Split apps
+#+begin_src conf
+http {
+    upstream allbackend {
+        server 127.0.0.1:2222;
+        server 127.0.0.1:3333;
+        server 127.0.0.1:4444;
+        server 127.0.0.1:5555;
+    }
+    upstream app1backend {
+        server 127.0.0.1:2222;
+        server 127.0.0.1:3333;
+    }
+    upstream app2backend {
+        server 127.0.0.1:4444;
+        server 127.0.0.1:5555;
+    }
+
+    server {
+        listen 80;
+        location / {
+            proxy_pass http://allbackend/;
+        }
+        location /app1 {
+            proxy_pass http://app1backend/;
+        }
+        location /app2 {
+            proxy_pass http://app2backend/;
+        }
+    }
+}
+events {}
+#+end_src
+** Layehttp r 4 loadbalance
+location is not allowed in layer 4.
+Layer 4 don't know which protocol is used.
+#+begin_src conf
+stream {
+    upstream allbackend {
+        server 127.0.0.1:2222;
+        server 127.0.0.1:3333;
+        server 127.0.0.1:4444;
+        server 127.0.0.1:5555;
+    }
+
+    server {
+        listen 80;
+        proxy_pass allbackend;
+    }
+}
+events {}
+
+#+end_src
+** SSL certificate
+Need to run nginx as sudo
+TLS checker - site where we can check certificate
+#+begin_src conf
+http {
+    upstream allbackend {
+        server 127.0.0.1:2222;
+        server 127.0.0.1:3333;
+        server 127.0.0.1:4444;
+        server 127.0.0.1:5555;
+    }
+
+    server {
+        listen 80;
+        listen 443 ssl;
+        ssl_certificate /etc/letsencrypt/live/nginxtest.ddns.net/fulchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/nginxtest.ddns.net/privkey.pem;
+        location / {
+            proxy_pass http://allbackend/;
+        }
+    }
+}
+events {}
+#+end_src
+** Apply TLS 1.3
+#+begin_src conf
+http {
+    upstream allbackend {
+        server 127.0.0.1:2222;
+        server 127.0.0.1:3333;
+        server 127.0.0.1:4444;
+        server 127.0.0.1:5555;
+    }
+
+    server {
+        listen 80;
+        listen 443 ssl;
+        ssl_certificate /etc/letsencrypt/live/nginxtest.ddns.net/fulchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/nginxtest.ddns.net/privkey.pem;
+        ssl_protocols TLSv1.3;
+        location / {
+            proxy_pass http://allbackend/;
+        }
+    }
+}
+events {}
+#+end_src
