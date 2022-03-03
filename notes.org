@@ -25,8 +25,12 @@
   - [[#nie-dziala-ls][Nie dziala ls]]
   - [[#nginx][nginx]]
   - [[#apache][apache]]
+- [[#network-configuration][Network configuration]]
+  - [[#with-ifupdown][With ifupdown]]
 - [[#environment][Environment]]
   - [[#saas-aware-video-module][SaaS-Aware-Video-Module]]
+- [[#terraform][Terraform]]
+  - [[#terraform-import-on-desk][Terraform import on desk]]
 
 * Install Doom Emacs
 **  Git 2.23+
@@ -459,6 +463,38 @@ PID   USER     TIME   COMMAND
 -> cache ma prawa 777
 -> obliczenia ma 770 dla usera i grupy nginx
 -> chmod 777 obliczenia
+* Network configuration
+** With ifupdown
+Used in older systems
+In below directory should be files starting with ifcfg- (ifcfg-eth0)
+#+begin_src bash
+ls /etc/sysconfig/network-scripts
+#+end_src
+
+ifcofng-eth0 file
+#+begin_src conf
+DEVICE=eth0
+HWADDR=08:00:27::1C:7C:F4 -> optional
+TYPE=Ethernet
+UUID=
+ONBOOT=on -> optional
+NM_CONTROLLED=yes -> Manage by Network Manager
+BOOTPROTO=dhcp/none -> if none, below entries neccecery
+IPADDR=10.0.1.40
+NETMASK=255.255.255.0
+GATEWAY=10.0.1.1
+DNS1=10.0.1.1
+#+end_src
+
+Switch off connection
+#+begin_src bash
+ifdown etho
+#+end_src
+Switch on connection
+#+begin_src bash
+ifup eth0
+#+end_src
+
 
 * Environment
 ** SaaS-Aware-Video-Module
@@ -467,3 +503,31 @@ Name                                CloudName    SubscriptionId                 
 MSI-SWE-PARTNER-STAGE-AZURECLOUD-0  AzureCloud   74545c1b-2b6d-4324-acda-bd921793e015  Enabled  True
 MSI-SWE-CIE-STAGE-AZURECLOUD        AzureCloud   d521004d-004e-4013-bb23-fe359ac90321  Enabled  False
 MSI-SWE-CIE-QA                      AzureCloud   29630a06-fdc5-486d-99c3-8ea14aa8cd2e  Enabled  False
+* Terraform
+
+Potrzebne, zeby dzialalo w pipeline.
+#+begin_src terraform
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "aware-backend-event-hubs"
+    storage_account_name = "saasawarebackendev321"
+    container_name       = "terraform_dev"
+    key                  = "eventhub.tfstate"
+  }
+}
+#+end_src
+** Terraform import on desk
+#+begin_src terraform
+provider "azurerm" {
+  features {}
+  skip_provider_registration = true
+}
+
+resource "azurerm_eventhub_namespace" "main" {
+  name                = "aware-backend-event-hubs"
+  location            = "eastus"
+  resource_group_name = "saas-aware-backend-eastus"
+  sku                 = "Standard"
+  capacity            = 1
+}
+#+end_src
