@@ -1,0 +1,650 @@
+#+TITLE: Kubernetes
+#+AUTHOR: chodkows
+
+* Architecture
+** Master Node - Manage, Plan, Schedule, Monitor
+*** ETCD
+**** ETCD basics
+Q: What is ETCD?
+A: ETCD is a distributed reliable key-value store that is simple, secure and fast
+Q: What is a Key-Value Store?
+A:
+| Key      | Value    |
+|----------+----------|
+| Name     | John Doe |
+| Age      | 45       |
+| Location | New York |
+| Salary   | 5000     |
+
+| Name        | Age | Location  |
+|-------------+-----+-----------|
+| John Doe    |  45 | New York  |
+| Dave Smith  |  33 | New York  |
+| Aryan Kumar |  10 | New York  |
+| Lauren Rob  |  13 | Banaglore |
+| Lily Oliver |  15 | Bangalore |
+
+Put Name "John Doe"
+Get Name
+"John Doe"
+
+Q: How to get started quickly
+Install ETCD:
+Download, extract, and run
+./etcd
+ETCD listen by default on 2379
+Default client is etcdctl
+Q: How to operate ETCD?
+#+begin_src bash
+./etcdctl set key1 value1
+./etcdctl get key1
+#+end_src
+
+**** ETCD in kubernetes
+etcd store information about:
+Nodes, Pods, Configs, Secrets, Accounts, Roles, Bindings, Others
+
+***** Setup in k8s - manual
+#+begin_src bash
+wget -q --https-only |
+    "https://github.com/coreos/etcd/releases/download/v3.3.9/etcd-v3.3.9-linux-amd64.tar.gz"
+#+end_src
+#+begin_src bash
+ExecStart=/usr/local/bin/etcd \\
+--name ${ETCD_NAME} \\
+--cert-file=/etc/etcd/kubernetes.pem \\
+--key-file=/etc/etcd/kubernetes-key.pem \\
+--peer-cert-file=/etc/etcd/kubernetes.pem \\
+--peer-key-file/etc/etcd/kubernetes-key.pem \\
+--trusted-ca-file=/etc/etcd/ca.pem \\
+--peer-trusted-ca-file=/etc/etcd/ca.pem \\
+--per-client-cert-auth \\
+--client-cert-auth \\
+--initial-advertise-peer-urls https://${INTERNAL_IP}:2380 \\
+--listen-peer-urls https://${INTERNAL_IP}:2380 \\
+--listen-client-urls https://${INTERNAL_IP}:2379,https://127.0.0.1:2379 \\
+--advertise-client-urls https://${INTERNAL_IP}:2379 \\
+--initial-cluster-token etcd-cluster-0 \\
+--initial-cluster controller-0=https://${CONTROLLER0_IP}:2380,controller-1=https://${CONTROLLER1_IP}:2380 \\
+--initial-cluster-state new \\
+--data-dir=/var/lib/etcd
+#+end_src
+***** Setup in k8s- kubeadm
+Automatic instalation
+
+#+begin_src bash
+kubectl get pods -n kube-system
+
+#+end_src
+
+#+RESULTS:
+| NAME                                       | READY | STATUS  | RESTARTS | AGE   |      |      |
+| coredns-6d4b75cb6d-lptwm                   | 1/1   | Running |       26 | (177m | ago) | 132d |
+| coredns-6d4b75cb6d-s5nzh                   | 1/1   | Running |       26 | (177m | ago) | 132d |
+| etcd-kind-control-plane                    | 1/1   | Running |       27 | (177m | ago) | 132d |
+| kindnet-mf92h                              | 1/1   | Running |       26 | (177m | ago) | 132d |
+| kube-apiserver-kind-control-plane          | 1/1   | Running |       27 | (177m | ago) | 132d |
+| kube-controller-manager-kind-control-plane | 1/1   | Running |       27 | (177m | ago) | 132d |
+| kube-proxy-4m5fj                           | 1/1   | Running |       26 | (177m | ago) | 132d |
+| kube-scheduler-kind-control-plane          | 1/1   | Running |       27 | (177m | ago) | 132d |
+
+#+begin_src bash
+kubectl exec etcd-kind-control-plane -n kube-system -- etcdctl get / --prefix --keys-only
+#+end_src
+#+begin_src basH
+    kubectl exec etcd-kind-control-plane -n kube-system -- sh -c "ETCDCTL_API=3 etcdctl get / --prefix --keys-only --limit=10 --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt  --key /etc/kubernetes/pki/etcd/server.key"
+
+#+end_src
+
+
+***** ETCD in HA Environment
+3 instancje
+--initial-cluster controller-0=https://${CONTROLLER0_IP}:2380,controller-1=https://${CONTROLLER1_IP}:2380 \\
+***** ETCD versions(Optional) Additional information about ETCDCTL Utility
+
+ETCDCTL is the CLI tool used to interact with ETCD.
+
+ETCDCTL can interact with ETCD Server using 2 API versions - Version 2 and Version 3.  By default its set to use Version 2. Each version has different sets of commands.
+
+For example ETCDCTL version 2 supports the following commands:
+
+    etcdctl backup
+    etcdctl cluster-health
+    etcdctl mk
+    etcdctl mkdir
+    etcdctl set
+
+
+Whereas the commands are different in version 3
+
+    etcdctl snapshot save
+    etcdctl endpoint health
+    etcdctl get
+    etcdctl put
+
+
+To set the right version of API set the environment variable ETCDCTL_API command
+
+export ETCDCTL_API=3
+
+
+When API version is not set, it is assumed to be set to version 2. And version 3 commands listed above don't work. When API version is set to version 3, version 2 commands listed above don't work.
+
+
+Apart from that, you must also specify path to certificate files so that ETCDCTL can authenticate to the ETCD API Server. The certificate files are available in the etcd-master at the following path. We discuss more about certificates in the security section of this course. So don't worry if this looks complex:
+
+    --cacert /etc/kubernetes/pki/etcd/ca.crt
+    --cert /etc/kubernetes/pki/etcd/server.crt
+    --key /etc/kubernetes/pki/etcd/server.key
+
+
+So for the commands I showed in the previous video to work you must specify the ETCDCTL API version and path to certificate files. Below is the final form:
+
+
+    kubectl exec etcd-master -n kube-system -- sh -c "ETCDCTL_API=3 etcdctl get / --prefix --keys-only --limit=10 --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt  --key /etc/kubernetes/pki/etcd/server.key"
+
+*** kube-scheduler
+Decide which pod go on which node
+1. Filter Nodes based on cpu and memory requirements
+2. Rank Nodes (more resources, better node)
+
+**** View kube-scheduler options- kubeadm
+cat /etc/kubernetes/manifests/kube-scheduler.yaml
+**** View kube-scheduler options - service
+ps -aux | grep kube-scheduler
+
+*** Kube-Controller-Manager
+Watch status and remediate situation
+**** Node-Controller
+Node-Controller via kube-apiserver looks into worker nodes for statuses
+Node Monitor Period = 5s
+Node Monitor Grace Period = 40s (after this time, node will be signed as unreachable)
+POD Eviction Timeout = 5m ()
+**** Replication-Controller
+is about replica sets
+**** View kube-controller-manager options - kubeadm
+cat /etc/kubernetes/manifests/kube-controller-manager.yaml
+**** View kube-controller-manager options - service
+cat /etc/systemd/system/kube-controller-manager.service
+ps -aux | grep kube-controller-manager
+*** kube-apiserver
+**** Creating a pod
+1. Autheticate User
+2. Validate Request
+3. Retrieve data
+4. Update ETCD
+5. Scheduler
+6. Kublet
+
+kubectl vs curl -X POST /api/v1/namespaces/default/pods...[other]
+**** Building kube-api server in the hard way
+kube-apiserver.service
+
+**** View api-server options - kubeadm
+#+begin_src bash
+kubectl get pods -n kube-system
+#+end_src
+
+#+RESULTS:
+| NAME                                       | READY | STATUS  | RESTARTS | AGE    |      |      |
+| coredns-6d4b75cb6d-lptwm                   | 1/1   | Running |       26 | (3h25m | ago) | 132d |
+| coredns-6d4b75cb6d-s5nzh                   | 1/1   | Running |       26 | (3h25m | ago) | 132d |
+| etcd-kind-control-plane                    | 1/1   | Running |       27 | (3h25m | ago) | 132d |
+| kindnet-mf92h                              | 1/1   | Running |       26 | (3h25m | ago) | 132d |
+| kube-apiserver-kind-control-plane          | 1/1   | Running |       27 | (3h25m | ago) | 132d |
+| kube-controller-manager-kind-control-plane | 1/1   | Running |       27 | (3h25m | ago) | 132d |
+| kube-proxy-4m5fj                           | 1/1   | Running |       26 | (3h25m | ago) | 132d |
+| kube-scheduler-kind-control-plane          | 1/1   | Running |       27 | (3h25m | ago) | 132d |
+
+#+begin_src bash
+kubectl exec kube-apiserver-kind-control-plane -n kube-system -- cat /etc/kubernetes/manifests/kube-apiserver.yaml
+#+end_src
+
+#+RESULTS:
+**** View api-server options
+cat /etc/systemd/system/kube-apiserver.service
+ps -aux | grep kube-apiserver
+
+** Worker Node - Host Application as Containers
+*** Container-runtime-engine(rkt, containerd, Docker)
+*** Kubelet
+1. Register Node
+2. Create Pods
+3. Monitor node and pods
+**** View kublet optios
+ps -aux | grep kubelet
+
+*** Kube-proxy
+Run on each node. When service is created, kube-proxy will be updated.
+
+Install kube-proxy and run it as a service.
+kube-proxy.service
+ExecStart=/usr/local/bin/kube-proxy \\
+--config=/var/lib/kube-proxy/kube-proxy-config.yaml
+Restart=on-failure
+RestartSec=5
+
+Kube proxy can be deployed as deamonset
+* POD
+** Imperative way
+
+#+begin_src bash
+kubectl run nginx --image nginx
+#+end_src
+
+#+RESULTS:
+: pod/nginx created
+
+#+begin_src bash
+kubectl get pods
+#+end_src
+
+#+RESULTS:
+| NAME      | READY | STATUS  | RESTARTS | AGE |
+| myapp-pod | 1/1   | Running |        0 | 26s |
+
+#+begin_src bash
+kubectl delete pod nginx
+#+end_src
+
+#+RESULTS:
+: nginx
+
+** Declarative way
+
+#+begin_src bash
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+    type: front-end
+spec:
+  containers:
+  - name: nginx-container
+    image: nginx
+EOF
+#+end_src
+
+#+RESULTS:
+: pod/myapp-pod created
+#+begin_src bash
+kubectl delete pod myapp-pod
+#+end_src
+
+#+RESULTS:
+: myapp-pod
+* Replication Controller
+** Declarative
+#+begin_src bash
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: myapp-rc
+  labels:
+    app: myapp
+    type: front-end
+spec:
+  template:
+    metadata:
+      name: myapp-pod
+      labels:
+        app: myapp
+        type: front-end
+    spec:
+      containers:
+      - name: nginx-container
+        image: nginx
+  replicas: 3
+EOF
+#+end_src
+
+#+RESULTS:
+: replicationcontroller/myapp-rc created
+
+#+begin_src bash
+kubectl get replicationcontroller
+#+end_src
+
+#+RESULTS:
+
+#+begin_src bash
+kubectl get pods
+#+end_src
+
+#+RESULTS:
+
+#+begin_src bash
+kubectl delete replicationcontroller myapp-rc
+#+end_src
+
+#+RESULTS:
+: myapp-rc
+* Replicaset
+#+begin_src bash
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: myapp-replicaset
+  labels:
+    app: myapp
+    type: front-end
+spec:
+  template:
+    metadata:
+      name: myapp-pod
+      labels:
+        app: myapp
+        type: front-end
+    spec:
+      containers:
+      - name: nginx-container
+        image: nginx
+  replicas: 3
+  selector:
+    matchLabels:
+      type: front-end
+EOF
+#+end_src
+
+#+RESULTS:
+: replicaset.apps/myapp-replicaset created
+
+#+begin_src bash
+kubectl get replicaset
+#+end_src
+
+#+begin_src bash
+kubectl get pods
+#+end_src
+
+#+RESULTS:
+
+#+begin_src bash
+kubectl delete replicaset myapp-replicaset
+#+end_src
+
+#+RESULTS:
+: myapp-replicaset
+
+** Labels and Selectors
+Replicaset monitor pods and it need to know which node have to monitor.
+
+#+begin_src yaml replicaset-definition.yml
+selector:
+  matchLabels:
+    tier: front-end
+#+end_src
+#+begin_src yaml pod-definition.yml
+metadata:
+  name: myapp-pod
+  labels:
+    tier: front-end
+#+end_src
+** Scale
+#+begin_src yaml in replicaset-definition.yml
+replicas: 6
+#+end_src
+#+begin_src bash
+kubeclt replace -f replicaset-definition.yml
+#+end_src
+#+begin_src bash
+kubectl scale --replicas=6 -f replicaset-definiton.yml
+#+end_src
+#+begin_src bash
+kubectl scale --replicas=6 -f replicaset myapp-replicaset
+#+end_src
+* Deployment
+Abstration above replicaset. Add ability to releasing.
+** Deploy
+
+#+begin_src bash
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-deployment
+  labels:
+    app: myapp
+    type: front-end
+spec:
+  template:
+    metadata:
+      name: myapp-pod
+      labels:
+        app: myapp
+        type: front-end
+    spec:
+      containers:
+      - name: nginx-container
+        image: nginx
+  replicas: 3
+  selector:
+    matchLabels:
+      type: front-end
+EOF
+#+end_src
+
+#+RESULTS:
+: deployment.apps/myapp-deployment created
+
+#+begin_src bash
+kubectl get deployment
+#+end_src
+
+#+RESULTS:
+
+#+begin_src bash
+kubectl get pods
+#+end_src
+
+#+RESULTS:
+
+#+begin_src bash
+kubectl delete deployment myapp-deployment
+#+end_src
+
+#+RESULTS:
+: myapp-deployment
+
+#+begin_src bash
+kubectl get all
+#+end_src
+
+#+RESULTS:
+| NAME               | TYPE      | CLUSTER-IP | EXTERNAL-IP | PORT(S) |  AGE |
+| service/kubernetes | ClusterIP |  10.96.0.1 | <none>      | 443/TCP | 133d |
+* Certification tip
+Here's a tip!
+
+As you might have seen already, it is a bit difficult to create and edit YAML files. Especially in the CLI. During the exam, you might find it difficult to copy and paste YAML files from browser to terminal. Using the kubectl run command can help in generating a YAML template. And sometimes, you can even get away with just the kubectl run command without having to create a YAML file at all. For example, if you were asked to create a pod or deployment with specific name and image you can simply run the kubectl run command.
+
+Use the below set of commands and try the previous practice tests again, but this time try to use the below commands instead of YAML files. Try to use these as much as you can going forward in all exercises
+
+Reference (Bookmark this page for exam. It will be very handy):
+
+https://kubernetes.io/docs/reference/kubectl/conventions/
+
+Create an NGINX Pod
+#+begin_src bash
+kubectl run nginx --image=nginx
+#+end_src
+
+#+RESULTS:
+: pod/nginx created
+
+Generate POD Manifest YAML file (-o yaml). Don't create it(--dry-run)
+#+begin_src bash :results scalar
+kubectl run nginx --image=nginx --dry-run=client -o yaml
+#+end_src
+
+#+RESULTS:
+#+begin_example
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: nginx
+  name: nginx
+spec:
+  containers:
+  - image: nginx
+    name: nginx
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+#+end_example
+
+Create a deployment
+#+begin_src bash
+kubectl create deployment --image=nginx nginx
+#+end_src
+
+#+RESULTS:
+: deployment.apps/nginx created
+
+Generate Deployment YAML file (-o yaml). Don't create it(--dry-run)
+#+begin_src bash :results scalar
+kubectl create deployment --image=nginx nginx --dry-run=client -o yaml
+#+end_src
+
+#+RESULTS:
+#+begin_example
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        resources: {}
+status: {}
+#+end_example
+
+Generate Deployment YAML file (-o yaml). Don't create it(--dry-run) with 4 Replicas (--replicas=4)
+#+begin_src bash :results scalar
+kubectl create deployment --image=nginx nginx --dry-run=client -o yaml > nginx-deployment.yaml
+#+end_src
+
+Save it to a file, make necessary changes to the file (for example, adding more replicas) and then create the deployment.
+#+begin_src bash
+kubectl create -f nginx-deployment.yaml
+#+end_src
+
+OR
+
+In k8s version 1.19+, we can specify the --replicas option to create a deployment with 4 replicas.
+#+begin_src bash
+kubectl create deployment --image=nginx nginx --replicas=4 --dry-run=client -o yaml > nginx-deployment.yaml
+#+end_src
+* Services
+** NodePort
+TargetPort - pod port (if not specified, the same as Port)
+Port - service port (mandatory)
+NodePort - node port (if not specified, one available from range 30000 - 32767 will be used)
+
+Service have build in load balancer:
+Algorithm: Random
+SessionAffinity: Yes
+
+#+begin_src bash
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  type: NodePort
+  ports:
+  - targetPort: 80
+    port: 80
+    nodePort: 30008
+  selector:
+    app: myapp
+    type: front-end
+EOF
+#+end_src
+
+#+RESULTS:
+: service/myapp-service created
+
+#+begin_src bash
+kubectl get services
+#+end_src
+
+#+RESULTS:
+| NAME          | TYPE      |   CLUSTER-IP | EXTERNAL-IP | PORT(S)      | AGE  |
+| kubernetes    | ClusterIP |    10.96.0.1 | <none>      | 443/TCP      | 133d |
+| myapp-service | NodePort  | 10.96.38.111 | <none>      | 80:30008/TCP | 33s  |
+#+begin_src bash :results scalar
+kubectl get nodes -o wide
+#+end_src
+
+#+RESULTS:
+: NAME                 STATUS   ROLES           AGE    VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE       KERNEL-VERSION   CONTAINER-RUNTIME
+: kind-control-plane   Ready    control-plane   133d   v1.24.0   172.18.0.2    <none>        Ubuntu 21.10   5.17.2-arch3-1   containerd://1.6.4
+
+#+begin_src bash :results scalar
+kubectl cluster-info
+#+end_src
+
+#+RESULTS:
+: Kubernetes control plane is running at https://127.0.0.1:36953
+: CoreDNS is running at https://127.0.0.1:36953/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+:
+: To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+
+#+begin_src bash
+curl http://172.18.0.2:30008
+#+end_src
+
+In case that pods are in sepearete nodes with separete IP addresses, service will also work, and curl for each IP will work.
+curl http://172.18.0.2:30008
+curl http://172.18.0.3:30008
+curl http://172.18.0.4:30008
+
+#+RESULTS:
+
+** ClusterIP
+#+begin_src bash
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  type: ClusterIP
+  ports:
+  - targetPort: 80
+    port: 80
+  selector:
+    app: myapp
+    type: backend
+EOF
+#+end_src
+
+#+RESULTS:
+: service/backend created
+
+** LoadBalancer
