@@ -648,3 +648,220 @@ EOF
 : service/backend created
 
 ** LoadBalancer
+* Namespaces
+
+Default namespaces:
+1. Default
+2. Kube-system
+3. Kube-public
+
+Both services(service-one and db-service) inside default namspace:
+#+begin_src
+mysql.connec("db-service")
+#+end_src
+Service-one in default, db-service in dev namespace:
+#+begin_src
+mysql.connect("db-service.dev.svc.cluster.local")
+#+end_src
+
+During creation a service, to DNS will be added address as below:
+db-service.dev.svc.cluster.local
+1. cluster.local - domain
+2. svc - subdomain
+3. dev - namespace
+4. db-service - service name
+
+Create namespace:
+ #+begin_src bash
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dev
+EOF
+ #+end_src
+
+ #+RESULTS:
+ : namespace/dev created
+Or:
+#+begin_src bash
+kubectl create namespace dev
+#+end_src
+
+Set context:
+#+begin_src bash
+kubectl config set-context $(kubectl config current-context) --namespace=dev
+#+end_src
+
+#+RESULTS:
+: kind-kind
+
+#+begin_src bash
+kubectl get pods
+#+end_src
+
+List all pods in all namespaces
+#+begin_src bash
+kubectl get pods --all-namespaces
+#+end_src
+
+#+RESULTS:
+| NAMESPACE          | NAME                                       | READY | STATUS  | RESTARTS | AGE  |      |      |
+| default            | nginx                                      | 1/1   | Running |        2 | (30m | ago) |  12h |
+| default            | nginx-8f458dc5b-pqw8p                      | 1/1   | Running |        2 | (30m | ago) |  12h |
+| kube-system        | coredns-6d4b75cb6d-lptwm                   | 1/1   | Running |       28 | (30m | ago) | 133d |
+| kube-system        | coredns-6d4b75cb6d-s5nzh                   | 1/1   | Running |       28 | (30m | ago) | 133d |
+| kube-system        | etcd-kind-control-plane                    | 1/1   | Running |       29 | (30m | ago) | 133d |
+| kube-system        | kindnet-mf92h                              | 1/1   | Running |       28 | (30m | ago) | 133d |
+| kube-system        | kube-apiserver-kind-control-plane          | 1/1   | Running |       29 | (30m | ago) | 133d |
+| kube-system        | kube-controller-manager-kind-control-plane | 1/1   | Running |       29 | (30m | ago) | 133d |
+| kube-system        | kube-proxy-4m5fj                           | 1/1   | Running |       28 | (30m | ago) | 133d |
+| kube-system        | kube-scheduler-kind-control-plane          | 1/1   | Running |       29 | (30m | ago) | 133d |
+| local-path-storage | local-path-provisioner-9cd9bd544-9ptwr     | 1/1   | Running |       46 | (29m | ago) | 133d |
+
+Resource quota:
+#+begin_src bash
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: compute-quota
+  namespace: dev
+spec:
+  hard:
+    pods: "10"
+    requests.cpu: "4"
+    requests.memort: 5Gi
+    limits.cpu: "10"
+    limits.memory: 10Gi
+EOF
+#+end_src
+* Imperative vs Declarative
+Create a pod with name *nginx* and image nginx
+#+begin_src bash
+kubectl run --image=nginx nginx
+#+end_src
+Create a deployment with name nginx and image nginx
+#+begin_src bash
+kubectl create deployment --image=nginx nginx
+#+end_src
+
+#+RESULTS:
+: deployment.apps/nginx created
+
+Create a service with CluserIP type with port and targetPort 80
+#+begin_src bash
+kubectl expose deployment nginx --port 80
+#+end_src
+
+#+RESULTS:
+: service/nginx exposed
+
+Edit deployment
+#+begin_src bash
+kubectl edit deployment nginx
+#+end_src
+Scale deployment
+#+begin_src bash
+kubectl scale deployment nginx --replicas=5
+#+end_src
+Change image for deployment (nginx= means container name)
+#+begin_src bash
+kubectl set image deployment nginx nginx=nginx:1.18
+#+end_src
+
+#+RESULTS:
+
+Create kubernetes resource
+#+begin_src bash
+kubectl create -f nginx.yaml
+#+end_src
+Replace kubernetes resource
+#+begin_src bash
+kubectl replace -f nginx.yaml
+#+end_src
+Delete kubernetes resource
+#+begin_src bash
+kubectl delete -f nginx.yaml
+#+end_src
+
+For declarative approach:
+#+begin_src bash
+kubectl apply -f nginx.yaml
+#+end_src
+** Certification tips
+While you would be working mostly the declarative way - using definition files, imperative commands can help in getting one time tasks done quickly, as well as generate a definition template easily. This would help save considerable amount of time during your exams.
+
+Before we begin, familiarize with the two options that can come in handy while working with the below commands:
+
+--dry-run: By default as soon as the command is run, the resource will be created. If you simply want to test your command , use the --dry-run=client option. This will not create the resource, instead, tell you whether the resource can be created and if your command is right.
+
+-o yaml: This will output the resource definition in YAML format on screen.
+
+
+Use the above two in combination to generate a resource definition file quickly, that you can then modify and create resources as required, instead of creating the files from scratch.
+
+
+POD
+Create an NGINX Pod
+#+begin_src
+kubectl run nginx --image=nginx
+#+end_src
+Generate POD Manifest YAML file (-o yaml). Don't create it(--dry-run)
+#+begin_src
+kubectl run nginx --image=nginx --dry-run=client -o yaml
+#+end_src
+
+Deployment
+Create a deployment
+#+begin_src
+kubectl create deployment --image=nginx nginx
+#+end_src
+Generate Deployment YAML file (-o yaml). Don't create it(--dry-run)
+#+begin_src
+kubectl create deployment --image=nginx nginx --dry-run=client -o yaml
+#+end_src
+Generate Deployment with 4 Replicas
+#+begin_src
+kubectl create deployment nginx --image=nginx --replicas=4
+#+end_src
+You can also scale a deployment using the kubectl scale command.
+#+begin_src
+kubectl scale deployment nginx --replicas=4
+#+end_src
+Another way to do this is to save the YAML definition to a file and modify
+#+begin_src
+kubectl create deployment nginx --image=nginx --dry-run=client -o yaml > nginx-deployment.yaml
+#+end_src
+You can then update the YAML file with the replicas or any other field before creating the deployment.
+
+Service
+Create a Service named redis-service of type ClusterIP to expose pod redis on port 6379
+#+begin_src
+kubectl expose pod redis --port=6379 --name redis-service --dry-run=client -o yaml
+#+end_src
+(This will automatically use the pod's labels as selectors)
+Or
+#+begin_src
+kubectl create service clusterip redis --tcp=6379:6379 --dry-run=client -o yaml
+#+end_src
+(This will not use the pods labels as selectors, instead it will assume selectors as app=redis. You cannot pass in selectors as an option. So it does not work very well if your pod has a different label set. So generate the file and modify the selectors before creating the service)
+
+Create a Service named nginx of type NodePort to expose pod nginx's port 80 on port 30080 on the nodes:
+#+begin_src
+kubectl expose pod nginx --type=NodePort --port=80 --name=nginx-service --dry-run=client -o yaml
+#+end_src
+(This will automatically use the pod's labels as selectors, but you cannot specify the node port. You have to generate a definition file and then add the node port in manually before creating the service with the pod.)
+Or
+#+begin_src
+kubectl create service nodeport nginx --tcp=80:80 --node-port=30080 --dry-run=client -o yaml
+#+end_src
+(This will not use the pods labels as selectors)
+
+Both the above commands have their own challenges. While one of it cannot accept a selector the other cannot accept a node port. I would recommend going with the kubectl expose command. If you need to specify a node port, generate a definition file using the same command and manually input the nodeport before creating the service.
+Reference:
+
+https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands
+
+https://kubernetes.io/docs/reference/kubectl/conventions/
+* Scheduling
