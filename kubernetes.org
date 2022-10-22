@@ -989,3 +989,102 @@ kubectl describe node kind-control-plane | grep Taint
 
 #+RESULTS:
 : Taints:             <none>
+** Nodes selector
+#+begin_src bash
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    ports:
+    - containerPort: 8080
+  nodeSelector:
+    size: Large
+EOF
+#+end_src
+
+#+begin_src bash
+kubectl label nodes node-1 size=Large
+#+end_src
+** Node affinity
+Advanced capabilities for selecting nodes for pod
+
+Below snippet is equivalent of the above one
+#+begin_src bash
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    ports:
+    - containerPort: 8080
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: size
+            operator: In
+            values:
+            - Large
+EOF
+#+end_src
+
+Apply pod if node is medium or large
+#+begin_src bash
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: size
+            operator: In
+            values:
+            - Medium
+            - Large
+#+end_src
+
+Apply pod only if node is not small
+#+begin_src bash
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: size
+            operator: NotIn
+            values:
+            - Small
+#+end_src
+
+Apply pod to node if such (size) label exists
+#+begin_src bash
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: size
+            operator: Exists
+#+end_src
+
+Node affinity types:
+Available:
+1. requiredDuringSchedulingIgnoredDuringExecution
+2. prefferedDuringSchedulingIgnoredDuringExecution
+ Planned:
+3. requiredDuringSchedulingRequredDuringExecution
+
+| DuringScheduling | DuringExectuion | no labels in node        | remove label during run |
+|------------------+-----------------+--------------------------+-------------------------|
+| Required         | Ignored         | not scheduled            | will run                |
+| Preffered        | Ignored         | scheduled on random node | will run                |
+| Required         | Required        | not scheduled            | pod will be removed     |
