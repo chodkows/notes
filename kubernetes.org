@@ -933,3 +933,59 @@ kubectl get pods --selector app=App1
 #+RESULTS:
 | NAME          | READY | STATUS  | RESTARTS | AGE |
 | simple-webapp | 1/1   | Running |        0 | 11s |
+** Taints and Tolerations
+Taint is set on node side.
+Tolerations is set on pod side.
+
+kubectl taint nodes node-name key=value:taint-effect
+#+begin_src bash
+kubectl taint nodes node1 app=blue:NoSchedule
+#+end_src
+
+Untaint node node01 (by adding - sign at the end)
+#+begin_src bash
+kubectl taint nodes node1 app=blue:NoSchedule-
+#+end_src
+
+Taint effects:
+1. NoSchedule - pod not be schedule on the node
+2. PreferNoSchedule - try avoid placing node on the node
+3. NoExecute - new pod will not be sheduled on the node and existing pod will be evicted if not tolerate the taint
+
+Tolerations:
+Each values in tolerations need to be in double quotes (""):
+#+begin_src bash
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    ports:
+    - containerPort: 8080
+  tolerations:
+  - key: "app"
+    operator: "Equal"
+    value: "blue"
+    effect: "NoSchedule"
+EOF
+#+end_src
+
+Master node have own taints. Kind cluster have not taints on kind-control-plane node
+#+begin_src bash
+kubectl get nodes
+#+end_src
+
+#+RESULTS:
+| NAME               | STATUS | ROLES         |  AGE | VERSION |
+| kind-control-plane | Ready  | control-plane | 133d | v1.24.0 |
+
+#+begin_src bash
+kubectl describe node kind-control-plane | grep Taint
+#+end_src
+
+#+RESULTS:
+: Taints:             <none>
