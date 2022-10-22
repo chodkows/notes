@@ -904,3 +904,32 @@ curl --header "Content-Type: application/json" --request POST --data '{"apiVersi
 
 #+end_src
 ** Labels and Selectors
+
+#+begin_src bash
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: simple-webapp
+  labels:
+    app: App1
+    function: Front-end
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    ports:
+    - containerPort: 8080
+EOF
+#+end_src
+
+#+RESULTS:
+: pod/simple-webapp created
+
+#+begin_src bash
+kubectl get pods --selector app=App1
+#+end_src
+
+#+RESULTS:
+| NAME          | READY | STATUS  | RESTARTS | AGE |
+| simple-webapp | 1/1   | Running |        0 | 11s |
