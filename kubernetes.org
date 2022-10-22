@@ -865,3 +865,42 @@ https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands
 
 https://kubernetes.io/docs/reference/kubectl/conventions/
 * Scheduling
+** Manual scheduling
+If there is no scheduler, pod will remain with Ready 0/1 with status pending.
+We can add *nodeName* directive to pod definition.
+This works only for newly created pod.
+#+begin_src bash
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  labels:
+    name: nginx
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    ports:
+    - containerPort: 8080
+  nodeName: node02
+EOF
+#+end_src
+If pod is actualy running, we need to create binding object.
+#+begin_src bash
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Binding
+metadata:
+  name: nginx
+target:
+  apiVersion: v1
+  kind: Node
+  name: node02
+EOF
+#+end_src
+#+begin_src bash
+curl --header "Content-Type: application/json" --request POST --data '{"apiVersion":"v1", "kind": "Binding" ... }' http://$SERVER/api/v1/namespaces/default/pods/$PODNAME/binding
+
+#+end_src
+** Labels and Selectors
