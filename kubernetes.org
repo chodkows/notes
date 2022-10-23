@@ -351,9 +351,6 @@ spec:
 EOF
 #+end_src
 
-#+RESULTS:
-: replicaset.apps/myapp-replicaset created
-
 #+begin_src bash
 kubectl get replicaset
 #+end_src
@@ -1134,3 +1131,103 @@ https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/cpu-default
 References:
 
 https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource
+** Daemonsets
+Daemonset ensure that one replica of pod is available on each available node.
+Usefull for monitoring and network agents.
+Kube-proxy is deployed as daemonset.
+#+begin_src bash
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: monitoring-daemon
+spec:
+  selector:
+    matchLabels:
+      app: monitoring-agent
+  template:
+    metadata:
+      labels:
+        app: monitoring-agent
+    spec:
+      containers:
+      - name: monitoring-agent
+        image: monitoring-agent
+EOF
+#+end_src
+** Static PODs
+If there is no master node and left only single node
+Use cases:
+For master nodes (control plane components)
+
+kubelet.service
+#+begin_src
+ExecStart=/usr/local/bin/kublet \\
+--container-runtime=remote \\
+--container-runtime-endpont=unix:///var/run/containerd/containerd.sock \\
+--pod-manifest-path=/etc/kubernetes/manifests \\
+--kubeconfig=/var/lib/kublet/kubeconfig \\
+--network-plugin=cni \\
+--register-node=true \\
+--v=2
+#+end_src
+
+OR:
+
+kubelet.service
+#+begin_src
+ExecStart=/usr/local/bin/kublet \\
+--container-runtime=remote \\
+--container-runtime-endpont=unix:///var/run/containerd/containerd.sock \\
+--config=kubeconfig.yaml \\
+--kubeconfig=/var/lib/kublet/kubeconfig \\
+--network-plugin=cni \\
+--register-node=true \\
+--v=2
+#+end_src
+
+kubeconfig.yaml
+#+begin_src yaml
+staticPodPath: /etc/kubernetes/manifests
+#+end_src
+
+To view static pod:
+#+begin_src bash
+docker ps
+#+end_src
+*** Task:
+We just created a new static pod named static-greenbox. Find it and delete it.
+This question is a bit tricky. But if you use the knowledge you gained in the previous questions in this lab, you should be able to find the answer to it.
+*** Solutions
+    First, let's identify the node in which the pod called static-greenbox is created. To do this, run:
+
+root@controlplane:~# kubectl get pods --all-namespaces -o wide  | grep static-greenbox
+default       static-greenbox-node01                 1/1     Running   0          19s     10.244.1.2   node01       <none>           <none>
+root@controlplane:~#
+
+From the result of this command, we can see that the pod is running on node01.
+
+    Next, SSH to node01 and identify the path configured for static pods in this node.
+    Important: The path need not be /etc/kubernetes/manifests. Make sure to check the path configured in the kubelet configuration file.
+
+root@controlplane:~# ssh node01
+root@node01:~# ps -ef |  grep /usr/bin/kubelet
+root       752   654  0 00:30 pts/0    00:00:00 grep --color=auto /usr/bin/kubelet
+root     28567     1  0 00:22 ?        00:00:11 /usr/bin/kubelet --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --config=/var/lib/kubelet/config.yaml --network-plugin=cni --pod-infra-container-image=k8s.gcr.io/pause:3.2
+root@node01:~# grep -i staticpod /var/lib/kubelet/config.yaml
+staticPodPath: /etc/just-to-mess-with-you
+root@node01:~#
+
+Here the staticPodPath is /etc/just-to-mess-with-you
+
+    Navigate to this directory and delete the YAML file:
+
+root@node01:/etc/just-to-mess-with-you# ls
+greenbox.yaml
+root@node01:/etc/just-to-mess-with-you# rm -rf greenbox.yaml
+root@node01:/etc/just-to-mess-with-you#
+
+    Exit out of node01 using CTRL + D or type exit. You should return to the controlplane node. Check if the static-greenbox pod has been deleted:
+
+root@controlplane:~# kubectl get pods --all-namespaces -o wide  | grep static-greenbox
+root@controlplane:~#
