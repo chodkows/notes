@@ -63,30 +63,6 @@ RUN apt-get install -y curl telnet dnsutils vim
 EOF
 #+end_src
 
-#+RESULTS:
-#+begin_example
-Sending build context to Docker daemon  2.048kB
-Step 1/6 : FROM httpd
- ---> d16a51d08814
-Step 2/6 : RUN apt-get update
- ---> Using cache
- ---> 818589dc476f
-Step 3/6 : RUN apt-get install -y iputils-ping
- ---> Using cache
- ---> af9ed2e7a1ab
-Step 4/6 : RUN apt-get install -y inetutils-traceroute
- ---> Using cache
- ---> 3da339f89bd7
-Step 5/6 : RUN apt-get install -y iproute2
- ---> Using cache
- ---> 0ba97bab1420
-Step 6/6 : RUN apt-get install -y curl telnet dnsutils vim
- ---> Using cache
- ---> 3883c2351e15
-Successfully built 3883c2351e15
-Successfully tagged nhttpd:latest
-#+end_example
-
 * Create container based on nhttpd
 #+begin_src bash :results scalar
 docker container ls
@@ -527,4 +503,133 @@ docker network inspect frontend
         "Labels": {}
     }
 ]
+#+end_example
+* Create a router(gateway)
+#+begin_src bash :results scalar
+docker run --name gw --network backend -d nhttpd
+docker network connect frontend gw
+#+end_src
+
+#+RESULTS:
+: 4cf06c0fa78b64a4f425933c262a98ba0f28a19cc3c5f0bab865789bdbb32bd4
+
+There is need to restart containers s1 and s2 and add flag --cap-add=NET_ADMIN
+#+begin_src bash
+docker stop s1
+docker stop s2
+docker rm s1 s2
+#+end_src
+
+#+RESULTS:
+| s1 |
+| s2 |
+| s1 |
+| s2 |
+
+* Add NET_ADMIN capability
+#+begin_src bash
+docker run --name s1 --network backend --cap-add=NET_ADMIN -d nhttpd
+docker run --name s2 --network frontend --cap-add=NET_ADMIN -d nhttpd
+#+end_src
+
+#+begin_src bash :results scalar
+docker container ls
+#+end_src
+#+RESULTS:
+: CONTAINER ID   IMAGE                  COMMAND                  CREATED          STATUS          PORTS                       NAMES
+: f68217a3cbb2   nhttpd                 "httpd-foreground"       49 seconds ago   Up 48 seconds   80/tcp                      s2
+: 74a6bc699cfe   nhttpd                 "httpd-foreground"       50 seconds ago   Up 48 seconds   80/tcp                      s1
+: 4cf06c0fa78b   nhttpd                 "httpd-foreground"       15 minutes ago   Up 15 minutes   80/tcp                      gw
+: c86fbdc18b19   kindest/node:v1.24.0   "/usr/local/bin/entr…"   4 months ago     Up 3 hours      127.0.0.1:36953->6443/tcp   kind-control-plane
+
+* Add routing via gateway(gw container)
+#+begin_src bash :dir /docker:74a6bc699cfe:/tmp :results scalar
+hostname
+hostname -i
+nslookup gw
+#+end_src
+
+#+RESULTS:
+: 74a6bc699cfe
+: 10.0.0.2
+: Server:		127.0.0.11
+: Address:	127.0.0.11#53
+:
+: Non-authoritative answer:
+: Name:	gw
+: Address: 10.0.0.3
+:
+
+#+begin_src bash :dir /docker:74a6bc699cfe:/tmp :results scalar
+ip route add 10.0.1.0/24 via 10.0.0.3
+#+end_src
+
+#+RESULTS:
+
+#+begin_src bash :dir /docker:f68217a3cbb2:/tmp :results scalar
+hostname
+hostname -i
+nslookup gw
+#+end_src
+
+#+RESULTS:
+: f68217a3cbb2
+: 10.0.1.2
+: Server:		127.0.0.11
+: Address:	127.0.0.11#53
+:
+: Non-authoritative answer:
+: Name:	gw
+: Address: 10.0.1.3
+:
+
+#+begin_src bash :dir /docker:f68217a3cbb2:/tmp :results scalar
+ip route add 10.0.0.0/24 via 10.0.1.3
+#+end_src
+
+#+RESULTS:
+
+#+begin_src bash :dir /docker:f68217a3cbb2:/tmp :results scalar
+ping -c 3 10.0.0.2
+curl 10.0.0.2
+traceroute 10.0.0.2
+#+end_src
+
+#+RESULTS:
+#+begin_example
+PING 10.0.0.2 (10.0.0.2) 56(84) bytes of data.
+64 bytes from 10.0.0.2: icmp_seq=1 ttl=63 time=0.074 ms
+64 bytes from 10.0.0.2: icmp_seq=2 ttl=63 time=0.138 ms
+64 bytes from 10.0.0.2: icmp_seq=3 ttl=63 time=0.130 ms
+
+--- 10.0.0.2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2021ms
+rtt min/avg/max/mdev = 0.074/0.114/0.138/0.028 ms
+<html><body><h1>It works!</h1></body></html>
+traceroute to 10.0.0.2 (10.0.0.2), 64 hops max
+  1   10.0.1.3  0.007ms  0.024ms  0.004ms
+  2   10.0.0.2  0.004ms  0.004ms  0.004ms
+#+end_example
+
+
+#+begin_src bash :dir /docker:74a6bc699cfe:/tmp :results scalar
+ping -c 3 10.0.1.2
+curl 10.0.1.2
+traceroute 10.0.1.2
+#+end_src
+
+#+RESULTS:
+#+begin_example
+PING 10.0.1.2 (10.0.1.2) 56(84) bytes of data.
+64 bytes from 10.0.1.2: icmp_seq=1 ttl=63 time=0.074 ms
+64 bytes from 10.0.1.2: icmp_seq=2 ttl=63 time=0.130 ms
+64 bytes from 10.0.1.2: icmp_seq=3 ttl=63 time=0.128 ms
+
+--- 10.0.1.2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2038ms
+rtt min/avg/max/mdev = 0.074/0.110/0.130/0.025 ms
+<html><body><h1>It works!</h1></body></html>
+traceroute to 10.0.1.2 (10.0.1.2), 64 hops max
+  1   10.0.0.3  0.007ms  0.004ms  0.004ms
+  2   10.0.1.2  0.004ms  0.004ms  0.004ms
 #+end_example
