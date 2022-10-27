@@ -1244,7 +1244,7 @@ profiles:
   - schedulerName: defaultScheduler
 #+end_src
 
-My scheduler
+*** Custom scheduler
 my-scheduler-config.yaml
 #+begin_src yaml
 apiVersion: kubescheduler.config.k8s.io/v1
@@ -1264,7 +1264,7 @@ ExecStart=/usr/local/bin/kube-scheduler \\
 --config=/etc/kubernetes/config/kube-scheduler.yaml
 #+end_src
 
-my-scheduler.service
+my-scsheduler.service
 #+begin_src
 ExecStart=/usr/local/bin/kube-scheduler \\
 --config=/etc/kubernetes/config/my-scheduler-config.yaml
@@ -1299,3 +1299,52 @@ leaderElection:
   resourceNamespace: kube-system
   resourceName: lock-object-my-scheduler
 #+end_src
+
+*** How to use custom scheduler
+#+begin_src yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+spec:
+  containers:
+    - image: nginx
+      name: nginx
+  schedulerName: my-custom-scheduler
+#+end_src
+
+*** Priority Class
+
+#+begin_src yaml
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority
+value: 1000000
+globalDefault: false
+description: "This priority class should be used for xyz services pods only."
+#+end_src
+
+*** Scheduling process
+Pods before allocated to node remain in scheduling queue.
+Next pods are filtered. Not suitable nodes are rejected.
+Next pods are scoring. Remaining nodes will give a score.
+Example:
+Scheduling queue: few pods, one selected:
+Pod = 6 cores
+Fitering:
+Node1 = 4 cores - not suitable
+Node2 = 4 cores - not suitable
+Node3 = 8 cores - suitable
+Node4 = 12 cores - suitable
+Scoring:
+Node3 = 8 - 6 = 2
+Node4 = 12 - 6 = 6
+Binding:
+Pod will be binding to Node4.
+
+Scheduling plugins:
+Scheduling queue - PrioritySort
+Filtering - NodeResourceFit, NodeName, NodeUnschedulable
+Scoring - NodeResourceFit, ImageLocality,
+Binding- DefaultBinder
