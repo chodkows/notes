@@ -1231,3 +1231,71 @@ root@node01:/etc/just-to-mess-with-you#
 
 root@controlplane:~# kubectl get pods --all-namespaces -o wide  | grep static-greenbox
 root@controlplane:~#
+
+** Multiple scheduler
+*** Default scheduler
+Default scheduler name can be changed in file as below:
+
+scheduler-config.yaml
+#+begin_src yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+profiles:
+  - schedulerName: defaultScheduler
+#+end_src
+
+My scheduler
+my-scheduler-config.yaml
+#+begin_src yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+profiles:
+  - schedulerName: mys-scheduler
+#+end_src
+
+Deploy additonal scheduler:
+#+begin_src bash
+wget https://storage.googleapis.com/kubernetes-release/release/v1.12.0/bin/linux/amd64/kube-scheduler
+#+end_src
+
+kube-scheduler.service
+#+begin_src
+ExecStart=/usr/local/bin/kube-scheduler \\
+--config=/etc/kubernetes/config/kube-scheduler.yaml
+#+end_src
+
+my-scheduler.service
+#+begin_src
+ExecStart=/usr/local/bin/kube-scheduler \\
+--config=/etc/kubernetes/config/my-scheduler-config.yaml
+#+end_src
+
+Deployment with kubeadm as Pod:
+#+begin_src yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-custom-scheduler
+  namespace: kube-system
+spec:
+  containers:
+    - command:
+        - kube-scheduler
+        - --address=127.0.0.1
+        - --kubeconfig=/etc/kubernetes/scheduler.conf
+        - --config=/etc/kubernetes/my-scheduler-config.yml
+      image: k8s.gcr.io/kube-scheduler-amd64:v1.11.3
+      name: kube-scheduler
+#+end_src
+
+Leader election
+#+begin_src yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+profiles:
+  - schedulerName: mys-scheduler
+leaderElection:
+  leaderElect: true
+  resourceNamespace: kube-system
+  resourceName: lock-object-my-scheduler
+#+end_src
