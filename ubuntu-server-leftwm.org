@@ -1,0 +1,89 @@
+#+title: Ubuntu Server Leftwm
+
+
+* Ubuntu server bootable pendive
+#+begin_src bash
+lsblk
+umount /dev/sda1
+wipefs --all /dev/sda
+sudo dd bs=4M if=/path/to/ISO of=/dev/sdx status=progress oflag=sync
+#+end_src
+
+* On mac
+** Prepare partition using 'narzedzia dyskowe'
+** Hold `alt` to switch boot source
+
+* Install ubuntu on created partition
+Be sure to using custom option during instalation
+
+* Instal on ubuntu
+** Basic leftwm dependencies
+#+begin_src bash
+sudo apt update
+sudo apt upgrade
+sudo apt install build-essential
+sudo apt install pkg-config libssl-dev # for leftwm-theme
+sudo apt install cmake
+sudo apt install freeglut3-dev
+sudo apt install xorg
+sudo apt install feh
+sudo apt install compton
+sudo apt install picom
+sudo apt install polybar
+sudo apt install xmobar
+sudo apt install lemonbar
+sudo apt install conky
+sudo apt install dmenu
+sudo apt-get install cmake pkg-config libfreetype6-dev libfontconfig1-dev libxcb-xfixes0-dev libxkbcommon-dev python3 # dependencies for allacrity
+sudo apt install variety # wallpapers
+#+end_src
+
+#+RESULTS:
+
+** Install rust
+#+begin_src bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source .cargo/env
+#+end_src
+
+** Install leftwm
+#+begin_src
+cargo install leftwm
+#+end_src
+
+** Link the xsession desktop file
+This is for login from a display manager(GDM, SSDM, LightDM)
+#+begin_src bash
+cat << EOF > ~/.config/leftwm/leftwm.desktop
+[Desktop Entry]
+Encoding=UTF-8
+Name=LeftWM
+Comment=A window manager for the adventurer
+Exec=leftwm
+Type=Application
+DesktopNames=LeftWM
+EOF
+
+sudo cp ~/.config/leftwm/leftwm.desktop /usr/share/xsessions
+#+end_src
+
+** Starting with startx
+Add following to ~/.xinitrc
+#+begin_src bash
+exec dbus-launch leftwm
+#+end_src
+
+** Install leftwm-theme
+#+begin_src bash
+git clone https://github.com/leftwm/leftwm-theme
+cd leftwm-theme
+cargo build --release
+sudo install -s -Dm755 ./target/release/leftwm-theme -t /usr/bin
+leftwm-theme update
+leftwm-theme install "Orange Forest"
+leftwm-theme apply "Orange Forest"
+leftwm-theme list
+leftwm-theme status
+leftwm-theme update
+leftwm-theme upgrade
+#+end_src

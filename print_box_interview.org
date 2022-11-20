@@ -1,0 +1,26 @@
+#+TITLE: Print Box Interview
+
+1. Co to jest CGroup?
+2. Co to jest iptables?
+3. Jak sprawdzić performance aplikacji w linuksie?
+4. Co to jest pamieć (VIRT, RES, SHR)?
+5. Co to jest rootless container?
+6. Jak dostać dane do analizy do WireSharka?
+7. Czym rozni sie deployment od StatefulSet?
+8. Czym jest ReplicaSet?
+9. Co to jest Operator w k8s?
+10. Co to jest CustomResource?
+11. Do czego służą requestResource i limitResource?
+12. Co to jest fragmentacja pamieci(ramu)?
+13. Co to jest control plane?
+14. Co to jest letsencrypt i czy mozna uzywac produkcyjnie?
+15. Jakie sa rodzaje certyfikatow ssl/tls?
+16. Co to jest ssl/tls?
+17. Czym rozni sie tcp i udp?
+18. Opisz architekture kubernetesa(worker node i master node).
+19. Jaki proces w linuksie odpowiada za zabicie procesu, ktory ma za duzo pamieci? (OOMKiller)
+20. Co to jest etcd?
+21. Jak dobrac ilosc requested i limited resources dla poda?
+22. Co to jest burst?
+23. Co to jest loadbalancer?
+24. Jak uzywa sie k8s service type Loadbalancer?
